@@ -1,8 +1,8 @@
-#define PI 				3.14159265359f
+#define PI 			3.14159265359f
 #define INV_PI 			0.31830988618f
-#define RAYBUMP_EPSILON 0.01f
+#define RAYBUMP_EPSILON 	0.01f
 #define PLANE_SIZE 		5
-#define SPHERE_SIZE 	2
+#define SPHERE_SIZE 		2
 #define LIGHT_SIZE 		2
 
 typedef struct Mat4x4{
