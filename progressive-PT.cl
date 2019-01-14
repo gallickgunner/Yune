@@ -440,26 +440,24 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
 	// BRDF Sampling
 	Ray brdf_sample_ray;
 	sampleHemisphere(&brdf_sample_ray, hit_info, seed);
-	w_i = brdf_sample_ray.dir;
 	
 	brdf_sample_ray.dir = normalize(brdf_sample_ray.dir);
+	w_i = brdf_sample_ray.dir;
+	
 	HitInfo new_hitinfo = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
 	
 	//If traceRay doesnt hit anything or if it does not hit the same light source return only light sample.
 	if(!traceRay(&brdf_sample_ray, &new_hitinfo, -1))
 	   return light_sample;
-    else if(new_hitinfo.light_ID != j)
+        else if(new_hitinfo.light_ID != j)
 		return light_sample;
 	
-	distance = dot(w_i, w_i);
-	w_i = normalize(w_i);  
-	
-	cosine_falloff = max(dot(w_i, hit_info.normal), 0.0f) * max(dot(-w_i, light_sources[j].norm), 0.0f);     
+	cosine_falloff = max(dot(w_i, hit_info.normal), 0.0f);// * max(dot(-w_i, light_sources[j].norm), 0.0f);     
 	brdf_pdf = max(dot(w_i, hit_info.normal), 0.0f) * INV_PI;	
-    mis_weight = brdf_pdf;
+        mis_weight = brdf_pdf;
 	powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 2);
 	
-	brdf_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * light_sources[j].power * cosine_falloff / (light_sources[j].area *distance);
+	brdf_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * light_sources[j].power * cosine_falloff / light_sources[j].area;
 	brdf_sample *=  mis_weight / brdf_pdf;
 	
 	return (light_sample + brdf_sample);
