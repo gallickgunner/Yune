@@ -417,6 +417,69 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
 	float4 w_i;
 	float light_pdf, brdf_pdf, geometry_term, mis_weight, cosine_falloff, distance;
 	
+	/* This is MIS without choosing a single light source. Note that we are taking 2 brdf samples (one for each light source).
+	 * We divide by (brdf_pdf*2) when calculating power_heuristic, see function. Then we divide the brdf_sample in the end by 2 as well.
+	 */
+	for(int j = 0; j < LIGHT_SIZE; j++)
+	{
+		float light_attenuation, cosine_falloff, r1, r2;
+		
+		*seed = xor_shift(*seed);
+		r1 = *seed / (float) UINT_MAX;		
+		*seed = xor_shift(*seed);
+		r2 = *seed / (float) UINT_MAX;
+		
+		w_i = (light_sources[j].pos + r1*light_sources[j].edge_l + r2*light_sources[j].edge_w) - hit_info.hit_point;
+		float distance = dot(w_i, w_i);
+		w_i = normalize(w_i);
+		
+		Ray shadow_ray = {hit_info.hit_point + w_i * RAYBUMP_EPSILON, w_i, INFINITY, true};
+		HitInfo shadow_hitinfo = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
+		
+		//Exclude light source "j" and call trace ray. If it returns false means light source unoccluded.
+		if(!traceRay(&shadow_ray, &shadow_hitinfo, j) )
+		{
+			light_attenuation =  max(dot(-w_i, light_sources[j].norm), 0.0f) / distance;
+			cosine_falloff = max(dot(w_i, hit_info.normal), 0.0f);	   
+		   
+		    light_pdf = 1/light_sources[j].area;
+			mis_weight =  light_pdf;
+			
+			brdf_pdf = max(dot(w_i, hit_info.normal), 0.0f) * INV_PI;
+			powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 2);
+		   
+			light_sample += evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * light_sources[j].power * cosine_falloff * light_attenuation * mis_weight;	
+		}
+		
+		//BRDF		
+		Ray brdf_sample_ray;
+		sampleHemisphere(&brdf_sample_ray, hit_info, seed);
+		w_i = brdf_sample_ray.dir;
+		
+		brdf_sample_ray.dir = normalize(brdf_sample_ray.dir);
+		HitInfo new_hitinfo = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
+		
+		//If traceRay doesnt hit anything or if it does not hit the same light source return only light sample.
+		if(!traceRay(&brdf_sample_ray, &new_hitinfo, -1))
+		   continue;
+		else if(new_hitinfo.light_ID != j)
+			continue;
+		
+		distance = dot(w_i, w_i);
+		w_i = normalize(w_i);  
+		
+		cosine_falloff = max(dot(w_i, hit_info.normal), 0.0f);// * max(dot(-w_i, light_sources[j].norm), 0.0f);     
+		brdf_pdf = max(dot(w_i, hit_info.normal), 0.0f) * INV_PI;	
+		mis_weight = 2*brdf_pdf;
+		powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 2);
+		
+		brdf_sample +=  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * light_sources[j].power * cosine_falloff * mis_weight / (light_sources[j].area*brdf_pdf);
+	}
+	brdf_sample /= 2;
+	
+	return light_sample + brdf_sample;
+	
+	/* This is MIS by choosing a single light source.
 	//We use MIS with Power Heuristic.
 
 	//Direct Light Sampling
@@ -430,37 +493,41 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
 	if(!traceRay(&shadow_ray, &shadow_hitinfo, j) )
 	{
 		mis_weight =  light_pdf;
+		
 		brdf_pdf = max(dot(w_i, hit_info.normal), 0.0f) * INV_PI;
-		powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 2);		
+		powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 2);
+			
 		light_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * geometry_term;	
 		light_sample *=  mis_weight/light_pdf;
+		
 	}
-	//return light_sample;
 	
 	// BRDF Sampling
 	Ray brdf_sample_ray;
 	sampleHemisphere(&brdf_sample_ray, hit_info, seed);
-	
-	brdf_sample_ray.dir = normalize(brdf_sample_ray.dir);
 	w_i = brdf_sample_ray.dir;
 	
+	brdf_sample_ray.dir = normalize(brdf_sample_ray.dir);
 	HitInfo new_hitinfo = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
 	
 	//If traceRay doesnt hit anything or if it does not hit the same light source return only light sample.
 	if(!traceRay(&brdf_sample_ray, &new_hitinfo, -1))
 	   return light_sample;
-        else if(new_hitinfo.light_ID != j)
+    else if(new_hitinfo.light_ID != j)
 		return light_sample;
+	
+	distance = dot(w_i, w_i);
+	w_i = normalize(w_i);  
 	
 	cosine_falloff = max(dot(w_i, hit_info.normal), 0.0f);// * max(dot(-w_i, light_sources[j].norm), 0.0f);     
 	brdf_pdf = max(dot(w_i, hit_info.normal), 0.0f) * INV_PI;	
-        mis_weight = brdf_pdf;
+    mis_weight = brdf_pdf;
 	powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 2);
 	
 	brdf_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * light_sources[j].power * cosine_falloff / light_sources[j].area;
 	brdf_sample *=  mis_weight / brdf_pdf;
 	
-	return (light_sample + brdf_sample);
+	return (light_sample + brdf_sample);*/
 }
 
 float4 evaluateBRDF(float4 w_i, float4 w_o, HitInfo hit_info)
@@ -676,5 +743,5 @@ uint xor_shift(uint seed)
 
 void powerHeuristic(float* weight, float light_pdf, float brdf_pdf, int beta)
 {
-	*weight = pown(*weight, beta) / ( pown(light_pdf, beta) + pown(brdf_pdf, beta) );	
+	*weight = pown(*weight, beta) / ( pown(light_pdf, beta) + pown(brdf_pdf*2, beta) );	
 }
