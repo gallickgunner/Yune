@@ -1,8 +1,8 @@
-# Helion-Render
+# Yune
 
-Helion-Render is a framework for a Renderer based on the GPU using OpenCL. It is mainly aimed towards young programmers and researchers who are looking to write their own Ray tracers, Path tracers and implementing other advanced techniques, etc. It provides the basic funtionality to open up a window, display and save Images that are processed by the GPU. 
+Yune is a framework for a Renderer based on the GPU using OpenCL. It is mainly aimed towards young programmers and researchers who are looking to write their own Ray tracers, Path tracers and implementing other advanced techniques, etc. It provides the basic funtionality to open up a window, display and save Images that are processed by the GPU. 
 
-If you are familiar with [Nori](https://github.com/wjakob/nori), this gets easier. Helion-Render is more like Nori on the GPU. As described earlier the host portion provides all the basic functionalities to open up a window and display the image. What happens to the Image depends on the Kernel which is upto the programmer that is **you**.
+If you are familiar with [Nori](https://github.com/wjakob/nori), this gets easier. Yune is more like Nori on the GPU. As described earlier the host portion provides all the basic functionalities to open up a window and display the image. What happens to the Image depends on the Kernel which is upto the programmer that is **you**.
 
 That being said as this is part of my and [@jabberwoky](https://github.com/jabberw0ky)'s bachelor thesis on Physically Based Rendering, we will be upgrading the GPU portion as well and keep adding new techniques as we study.
 
@@ -12,7 +12,7 @@ You can use this software in two ways.
 
 2. You build this project or use only the executable if provided in the Release. You can then only do OpenCL programming in a separate file and mention it's name when the application asks. You won't need to recompile the project at all. This means you can keep on changing the kernel file or even use many different files with different algorithms without compiling at all :)
 
-Helion-Render uses OpenCL-GL interoperability as the main core for processing images on the kernel and displaying them on the window. Aside from that it uses 
+Yune uses OpenCL-GL interoperability as the main core for processing images on the kernel and displaying them on the window. Aside from that it uses 
 
 * [GLFW](https://github.com/glfw/glfw), for window and input managment.
 * [GLAD](https://github.com/Dav1dde/glad) for OpenGL 3.x and higher windows.
@@ -37,7 +37,7 @@ Yes, you are at the right place. You can either compile the whole project yourse
 <br/>
 <br/>
 
->**I am a programmer/researcher and I intend to modify Helion-Render to make my own Renderer or something.**
+>**I am a programmer/researcher and I intend to modify Yune to make my own Renderer or something.**
 
 Yes, you are at the right place. You don't need to build this project or whatsoever. Just clone it as it is, compile the dependencies and create a VS or Codeblocks project linking the right dependencies and start coding.
 
