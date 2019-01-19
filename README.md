@@ -42,7 +42,7 @@ Yes, you are at the right place. You can either compile the whole project yourse
 Yes, you are at the right place. You don't need to build this project or whatsoever. Just clone it as it is, compile the dependencies and create a VS or Codeblocks project linking the right dependencies and start coding.
 
  ---
-Right Now I haven't updated it to support build system like Cmake etc. If anybody still wants to compile it, I'll add some detailed steps soon. For now You can try the `.exe` file to check how it looks like.
+Right Now I haven't updated it to support build system like Cmake etc. If anybody still wants to compile it, I'll add some detailed steps soon. Will add a release soon.
 
 
 
