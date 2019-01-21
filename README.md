@@ -33,7 +33,7 @@ Nope, you are at the wrong place. While you can run it and save Images with pre-
 
 >**I am a programmer/researcher and I intend to implement some rendering technique.**
 
-Yes, you are at the right place. You can either compile the whole project yourself (which is preferred) or just use the "exe" and just do programming in the kernel file. That's the advantage of it.
+Yes, you are at the right place. You can either compile the whole project yourself (which is preferred) or just use the "exe" and just do programming in the kernel file. This will work as long as your new algorithms won't require changes in host logic. For example multi-pass algoithms may require enqueuing more than 1 kernel. We still haven't generalized it yet.
 <br/>
 <br/>
 
@@ -42,7 +42,9 @@ Yes, you are at the right place. You can either compile the whole project yourse
 Yes, you are at the right place. You don't need to build this project or whatsoever. Just clone it as it is, compile the dependencies and create a VS or Codeblocks project linking the right dependencies and start coding.
 
  ---
-Right Now I haven't updated it to support build system like Cmake etc. If anybody still wants to compile it, I'll add some detailed steps soon. Will add a release soon.
+Right Now I haven't updated it to support build system like Cmake etc. If anybody still wants to compile it, I'll add some detailed steps soon.
+
+### Added an alpha release. Check it out.
 
 
 
