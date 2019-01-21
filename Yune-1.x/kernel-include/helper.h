@@ -29,6 +29,5 @@ uint xor_shift(uint seed)
 
 void powerHeuristic(float* weight, float light_pdf, float brdf_pdf, int beta)
 {
-    
     *weight = (pown(*weight, beta)) / (pown(light_pdf, beta) + pown(brdf_pdf, beta) );  
 }
