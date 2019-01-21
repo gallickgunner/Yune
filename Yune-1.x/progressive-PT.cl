@@ -81,8 +81,6 @@ void createRay(float pixel_x, float pixel_y, int img_width, int img_height, Ray*
 	eye_ray->dir.z = -main_cam->view_plane_dist;
 	eye_ray->dir.w = 0;
 	
-	eye_ray->dir = normalize(eye_ray->dir);
-	
     eye_ray->dir.x = dot(main_cam->view_mat.r1, eye_ray->dir);
 	eye_ray->dir.y = dot(main_cam->view_mat.r2, eye_ray->dir);
 	eye_ray->dir.z = dot(main_cam->view_mat.r3, eye_ray->dir);
