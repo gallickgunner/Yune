@@ -1,0 +1,37 @@
+#This file is needed by "Renderer" to load options such as width , height, kernel name etc. The main purpose was to
+# achieve compile time independency. This means we won't have to re-compile if we change these options here.
+# Note that the order of the options is important, since that is what is used to order which functions are supplied with options first.
+
+#Width, Height
+1280
+720
+
+#Fullscreen?
+0
+
+#OpenCL compiler options are not mandatory (comma separated and without spaces)
+
+#Compiler options provided?
+0
+
+#options
+#
+
+#Kernel File name
+progressive-PT.cl
+
+#Kernel Function Name
+pathtracer
+
+#GWS and LWS are not mandatory. If not provided Renderer will use getWorkgroupSizes() function.
+
+#GWS and LWS provided?
+1
+
+#GWS
+1280
+720
+
+#LWS
+8
+8
