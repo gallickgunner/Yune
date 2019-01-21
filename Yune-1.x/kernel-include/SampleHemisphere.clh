@@ -42,7 +42,8 @@ void phongsampleHemisphere (Ray* ray, float* pdf, float4 w_i, HitInfo hit_info, 
 	Since reflection direction aligned with Z axis, alpha equals theta. Formula is,
 	
 	(alpha, phi) = (acos(r1^(1/(n+1))), 2pi*r2)
-	*/	
+	*/
+	
 	int phong_exponent;
 	if(hit_info.obj_ID > 0)
 		phong_exponent = spheres[hit_info.obj_ID].phong_exponent;
