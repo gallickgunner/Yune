@@ -17,7 +17,7 @@ float4 evaluateBRDF(float4 w_i, float4 w_o, HitInfo hit_info);
 int sampleLights(HitInfo hit_info, float* geometry_term, float* light_pdf, float4* w_i, uint* seed);
 
 __kernel void pathtracer(__write_only image2d_t outputImage, __read_only image2d_t inputImage,
-									__constant Camera* main_cam, int RR_THRESHOLD, int GI_CHECK, int reset, uint rand)
+						 __constant Camera* main_cam, int RR_THRESHOLD, int GI_CHECK, int reset, uint rand)
 {
 	int img_width = get_image_width(outputImage);
 	int img_height = get_image_height(outputImage);
