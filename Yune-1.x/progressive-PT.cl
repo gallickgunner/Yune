@@ -5,9 +5,9 @@
 #define SPHERE_SIZE 	2
 #define LIGHT_SIZE 		2
 
-#include "C:\Users\Bhao\Documents\C++ projects\OpenCL-1.x\BDPT\bin\Debug\kernel-include\typedefs.clh"
-#include "C:\Users\Bhao\Documents\C++ projects\OpenCL-1.x\BDPT\bin\Debug\kernel-include\helper.clh"
-#include "C:\Users\Bhao\Documents\C++ projects\OpenCL-1.x\BDPT\bin\Debug\kernel-include\SampleHemisphere.clh"
+#include "\...\kernel-include\typedefs.clh"
+#include "\...\kernel-include\helper.clh"
+#include "\...\kernel-include\SampleHemisphere.clh"
 
 void createRay(float pixel_x, float pixel_y, int img_width, int img_height, Ray* eye_ray, constant Camera* main_cam);
 bool traceRay(Ray* ray, HitInfo* hit_info, int exclude_lightID);
