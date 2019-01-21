@@ -5,9 +5,9 @@
 #define SPHERE_SIZE 	2
 #define LIGHT_SIZE 		2
 
-#include "\...\kernel-include\typedefs.clh"
-#include "\...\kernel-include\helper.clh"
-#include "\...\kernel-include\SampleHemisphere.clh"
+#include "\...\kernel-include\typedefs.h"
+#include "\...\kernel-include\helper.h"
+#include "\...\kernel-include\SampleHemisphere.h"
 
 void createRay(float pixel_x, float pixel_y, int img_width, int img_height, Ray* eye_ray, constant Camera* main_cam);
 bool traceRay(Ray* ray, HitInfo* hit_info, int exclude_lightID);
