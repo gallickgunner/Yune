@@ -6,7 +6,7 @@ void powerHeuristic(float* weight, float light_pdf, float brdf_pdf, int beta);
 
 float getYluminance(float4 color)
 {
-	return 0.212671f*color.x + 0.715160f*color.y + 0.072169f*color.z;
+    return 0.212671f*color.x + 0.715160f*color.y + 0.072169f*color.z;
 }
 
 uint wang_hash(uint seed)
@@ -21,14 +21,14 @@ uint wang_hash(uint seed)
 
 uint xor_shift(uint seed)
 {
-	seed ^= seed << 13;
-	seed ^= seed >> 17;
-	seed ^= seed << 5;
-	return seed;
+    seed ^= seed << 13;
+    seed ^= seed >> 17;
+    seed ^= seed << 5;
+    return seed;
 }
 
 void powerHeuristic(float* weight, float light_pdf, float brdf_pdf, int beta)
 {
-	
-	*weight = (pown(*weight, beta)) / (pown(light_pdf, beta) + pown(brdf_pdf, beta) );	
+    
+    *weight = (pown(*weight, beta)) / (pown(light_pdf, beta) + pown(brdf_pdf, beta) );  
 }
