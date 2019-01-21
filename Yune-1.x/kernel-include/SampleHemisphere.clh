@@ -4,7 +4,7 @@ void cosineWeightedHemisphere(Ray* ray, float* pdf, HitInfo hit_info, uint* seed
 
 void phongsampleHemisphere (Ray* ray, float* pdf, float4 w_i, HitInfo hit_info, uint* seed)
 {
-	/* Create a new coordinate system for Normal Space where Z aligns with Reflection Direction. */
+	// Create a new coordinate system for Normal Space where Z aligns with Reflection Direction.
 	Mat4x4 normal_to_world;
 	float4 Ny, Nx, Nz;
 	
