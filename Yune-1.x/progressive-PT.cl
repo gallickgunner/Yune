@@ -204,7 +204,11 @@ float4 shading(Ray ray, int RR_THRESHOLD, int GI_CHECK, uint* seed)
     if(GI_CHECK)
     {   
         int x = 0;
-        for(int i = 0; i < 50; i++)
+      
+        /* Currently bug on AMD i guess. While loop doesn't work properly and gives dark images. On NVIDIA while works as intended. 
+         * Hence as a workaround for AMD, used for loop with a high limit. (RR would prolly break before 100).
+         */
+        for(int i = 0; i < 100; i++)
         //while(true)
         {
             HitInfo new_hitinfo = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
