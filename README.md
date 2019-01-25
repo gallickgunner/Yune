@@ -44,7 +44,12 @@ Yes, you are at the right place. You don't need to build this project or whatsoe
  ---
 Right Now I haven't updated it to support build system like Cmake etc. If anybody still wants to compile it, I'll add some detailed steps soon.
 
+Here is a picture obtained by Uni-directional Pathtracing with Next Event Estimation and using Modified Phong BRDF at 4000 spp.  
+
+<img src="https://r0pikq.bn.files.1drv.com/y4mhWXu4VSbDT-gNofzyb9R4P_t8n56ygrisW0bLnhN2owntA6OlCE4H84AYsprxs03moM2zI4s_aIlOLyM--1jH10RPwUBbhMxbmqxqWOl63V1zOi4Le258LztUiBIa0AIRSskmfLFxWJzA6jw8L2zYsQoR2J_6aaDzBqUCRI1dW9bePXgrjliRY3WnbzL6YMcp2jjFFOgwYX3oVnoXglZgQ?cropmode=none"/>
+
 ### Added an alpha release. Check it out.
+
 
 
 
