@@ -1,6 +1,6 @@
 # Yune
 
-Yune is a framework for a Renderer based on the GPU using OpenCL. It is mainly aimed towards young programmers and researchers who are looking to write their own Ray tracers, Path tracers and implementing other advanced techniques, etc. It provides the basic funtionality to open up a window, display and save Images that are processed by the GPU. 
+Yune is a framework for a Physically based Renderer based on the GPU using OpenCL. It is mainly aimed towards young programmers and researchers who are looking to write their own Ray tracers, Path tracers and implementing other advanced techniques and Physically based Reflection models, etc. It provides the basic funtionality to open up a window, display and save Images that are processed by the GPU. 
 
 If you are familiar with [Nori](https://github.com/wjakob/nori), this gets easier. Yune is more like Nori on the GPU. As described earlier the host portion provides all the basic functionalities to open up a window and display the image. What happens to the Image depends on the Kernel which is upto the programmer that is **you**.
 
@@ -17,18 +17,17 @@ Yune uses OpenCL-GL interoperability as the main core for processing images on t
 * [GLFW](https://github.com/glfw/glfw), for window and input managment.
 * [GLAD](https://github.com/Dav1dde/glad) for OpenGL 3.x and higher windows.
 * [Eigen](https://github.com/eigenteam/eigen-git-mirror) for basic Vector types and math.
-* [Assimp](https://github.com/assimp/assimp) for loading models.
 * [FreeImage](http://freeimage.sourceforge.net) for saving screenshots.
 * [NanoGUI](https://github.com/wjakob/nanogui) for basic widgets.
 
-Note that you don't need many of these dependencies as NanoGUI already has GLFW, GLAD, EIGEN in it. So in actuality all you need is NanoGUI, Assimp and FreeImage. 
+Note that you don't need many of these dependencies as NanoGUI already has GLFW, GLAD, EIGEN in it. So in actuality all you need is NanoGUI and FreeImage. 
 
 ---
 If you are still confused whether this is up for you here are a few points to clear your confusion.
 
 >**I am not a programmer and I intend to use this to see pretty images.**
 
-Nope, you are at the wrong place. While you can run it and save Images with pre-written algorithms implemented by us, that's all you are gonna get out of it.
+Nope, you are at the wrong place. 
 <br/>
 
 >**I am a programmer/researcher and I intend to implement some rendering technique.**
