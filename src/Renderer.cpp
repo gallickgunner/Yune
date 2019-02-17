@@ -76,7 +76,7 @@ namespace yune
         }
 
         if(options.empty())
-            throw RuntimeError("Please create a file named <renderer-options.txt> and provide all the options.");
+            throw RuntimeError("Please create a file named <renderer-options.yun> and provide all the options.");
 
         int i = 0;
         //Start Processing options.
