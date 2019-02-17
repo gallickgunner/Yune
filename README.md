@@ -1,6 +1,6 @@
 # Yune
 
-Yune is a framework for a Physically based Renderer based on the GPU using OpenCL. It is mainly aimed towards young programmers and researchers who are looking to write their own Ray tracers, Path tracers and implementing other advanced techniques like Physically based Reflection models, etc. It provides the basic funtionality to open up a window, display and save Images that are processed by the GPU. 
+Yune is a framework for a Physically based Renderer based on the GPU using OpenCL. It is mainly aimed towards young programmers and researchers who are looking to write their own Ray tracers, Path tracers and implementing other advanced techniques like Physically based Reflection models, etc. It provides the basic funtionality to open up a window, display and save Images that are processed by the GPU. We also provide some basic benchmarking functionality. *FPS, ms/frame, ms/kernel, total render time and samples per pixel (spp)* are updated in real-time. You can save the image at specific **spp** by providing the value in options. This helps in seeing performance gains if you are working on optimizing the code or comparing different implementations.
 
 If you are familiar with [Nori](https://github.com/wjakob/nori), this gets easier. Yune is more like Nori on the GPU. As described earlier the host portion provides all the basic functionalities to open up a window, display the image and setup minimal buffers that would be required by a normal Pathtracer or Raytracer. What happens to the Image next depends on the Kernel which is upto the programmer that is **you**.
 
@@ -49,7 +49,9 @@ Here is a picture obtained by Uni-directional Pathtracing with Next Event Estima
 
 <img src="https://r0pikq.bn.files.1drv.com/y4mhWXu4VSbDT-gNofzyb9R4P_t8n56ygrisW0bLnhN2owntA6OlCE4H84AYsprxs03moM2zI4s_aIlOLyM--1jH10RPwUBbhMxbmqxqWOl63V1zOi4Le258LztUiBIa0AIRSskmfLFxWJzA6jw8L2zYsQoR2J_6aaDzBqUCRI1dW9bePXgrjliRY3WnbzL6YMcp2jjFFOgwYX3oVnoXglZgQ?cropmode=none"/>
 
-### Added an alpha release. Check it out.
+![1drvimage](https://r0mthq.bn.files.1drv.com/y4p7eV7vM8oASwENjwZp-rrBfUO-UZnmkdOLyG3eEa7lahUtcMG0r8hTv1gPI3L7WPL-biFwULeE7h28OFfzwilLr1Vsk3SmF-K_ehhi64BLfoiXBmI3ttlx_s_i5TNY5JdVnP1QQoelPr3ODxtDlTToxvq65VNvGYkC9O9b6XkB5OTUMaFBmCJPa6Psy3YdwFiSiDYJ3yhSukw_Z4pORaFpw/Untitled.png)
+
+### Added a release. Check it out.
 
 
 
