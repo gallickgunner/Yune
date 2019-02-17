@@ -1,10 +1,10 @@
 /******************************************************************************
- *  This file is part of "Yune".
+ *  This file is part of Yune".
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a Physically based Renderer using Bi-Directional Path Tracing.
- *  Right now the renderer only  works for devices that support OpenCL and OpenGL.
+ *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
+ *  researchers trying to implement Physically Based Rendering techniques.
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,7 +46,6 @@ namespace yune
         options.stop = false;
         options.save_img = false;
         options.gi_check = 1;
-        options.rr_threshold = 3;
         options.save_img_samples =0;
 
         //ctor
@@ -269,25 +268,11 @@ namespace yune
                 // Text box for file extension of saved image. Valid extensions are {png, jpeg, jpg, jpe, bmp}
                 {
                     new nanogui::Label(popup, "Save Extension :", "sans-bold");
-                    save_ext = new nanogui::TextBox(popup, ".");
+                    save_ext = new nanogui::TextBox(popup, ".png");
                     save_ext->setEditable(true);
                     save_ext->setFontSize(16);
                     save_ext->setFixedSize(Eigen::Vector2i(100,20));
                     save_ext->setFormat(".[A-Za-z]*");
-                }
-
-                // Int box for nuumber of Russian Roulette Threhshold.
-                {
-                    new nanogui::Label(popup, "RR Threshold :", "sans-bold");
-                    nanogui::IntBox<int>* int_box = new nanogui::IntBox<int>(popup, 3);
-                    int_box->setEditable(true);
-                    int_box->setSpinnable(true);
-                    int_box->setFontSize(16);
-                    int_box->setFixedSize(Eigen::Vector2i(100,20));
-                    int_box->setMinMaxValues(1, std::numeric_limits<int>::max());
-                    int_box->setCallback([&](int rr_threshold){ if(rr_threshold <= 0)
-                                                                    rr_threshold = 1;
-                                                                this->options.rr_threshold = rr_threshold; });
                 }
             }
         }

@@ -1,0 +1,36 @@
+# This file is needed by "Renderer" to load options such as width , height, kernel name etc. The main purpose was to
+# achieve compile time independency. This means we won't have to re-compile if we change these options here.
+# Note that the order of the options is important, since that is what is used to order which functions are supplied with options first.
+# If an option is optional and not provided, a "-" is given in it's place.
+
+#Width, Height
+640
+480
+
+#Fullscreen?
+0
+
+#OpenCL compiler options are not mandatory (comma separated and without spaces). 
+-
+
+#Kernel File name
+progressive-PT-primitive.cl
+
+#Kernel Function Name
+pathtracer
+
+#GWS and LWS are not mandatory. If not provided Yune will let OpenCL runtime to automatically choose the best possible size
+
+#GWS
+640
+480
+
+#LWS
+-
+-
+
+#Model File and Material file name (If not provided, Yune assumes the scene is described inside kernel. If model file provided, material file **must** be provided as well.)
+-
+-
+#./testobj.rtt
+#./testmat.pbm

@@ -1,10 +1,10 @@
 /******************************************************************************
- *  This file is part of "Yune".
+ *  This file is part of Yune".
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a Physically based Renderer using Bi-Directional Path Tracing.
- *  Right now the renderer only  works for devices that support OpenCL and OpenGL.
+ *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
+ *  researchers trying to implement Physically Based Rendering techniques.
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 namespace yune
 {
 
-    Camera::Camera() : y_FOV(90.0f), view_to_world_mat(), rotation_speed(0.25f), move_speed(0.4f)
+    Camera::Camera() : y_FOV(60.0f), view_to_world_mat(), rotation_speed(0.25f), move_speed(0.4f)
     {
         //ctor
         setViewMatrix(Vec4f(1.f, 0.f, 0.f, 0.f),  // side
@@ -59,18 +59,21 @@ namespace yune
         //dtor
     }
 
-    void Camera::setBuffer(cl_float* buffer)
+    void Camera::setBuffer(Cam* cam_data)
     {
-        for(int i = 0; i < 16; i+=4)
-        {
-            Vec4f temp = view_to_world_mat.row(i/4);
-            buffer[i] = temp.x();
-            buffer[i+1] = temp.y();
-            buffer[i+2] = temp.z();
-            buffer[i+3] = temp.w();
-        }
+        Vec4f temp = view_to_world_mat.row(0);
+        cam_data->r1 = cl_float4{temp.x(), temp.y(), temp.z(), temp.w()};
 
-        buffer[16] = view_plane_dist;
+        temp = view_to_world_mat.row(1);
+        cam_data->r2 = cl_float4{temp.x(), temp.y(), temp.z(), temp.w()};
+
+        temp = view_to_world_mat.row(2);
+        cam_data->r3 = cl_float4{temp.x(), temp.y(), temp.z(), temp.w()};
+
+        temp = view_to_world_mat.row(3);
+        cam_data->r4 = cl_float4{temp.x(), temp.y(), temp.z(), temp.w()};
+
+        cam_data->view_plane_dist = view_plane_dist;
         is_changed = false;
     }
 

@@ -1,0 +1,26 @@
+# Template for material file required by Yune.
+# "ks" can also be thought of as the fresnel reflectance  at normal incidence. "kd" is the color due to diffuse reflection
+# and should be near 0 for metals. "alpha_x" and "alpha_y" are parameters that control slope distribution of microfacets for anisotropic
+# materials. They are equal for isotropic materials. "mirror" and "transmissive" determine whether the material is perfectly
+# specular and transparent.
+
+id 1
+ke 1 2 3
+kd 4 5 6
+ks 5 6 5
+ior 1.5
+alpha_x 100
+alpha_y 200
+mirror 0
+transmissive 0
+
+
+id 2
+ke 11 12 13
+kd 14 51 16
+ks 51 61 51
+ior 1.5123
+alpha_x 1001
+alpha_y 2001
+mirror 1
+transmissive 1

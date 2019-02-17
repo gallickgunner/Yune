@@ -1,10 +1,10 @@
 /******************************************************************************
- *  This file is part of "Yune".
+ *  This file is part of Yune".
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a Physically based Renderer using Bi-Directional Path Tracing.
- *  Right now the renderer only  works for devices that support OpenCL and OpenGL.
+ *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
+ *  researchers trying to implement Physically Based Rendering techniques.
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,15 +38,14 @@
 
 namespace yune
 {
-
-    Renderer::Renderer() : cam_data(17)
+    Renderer::Renderer()
     {
-
         //ctor
     }
 
     Renderer::~Renderer()
     {
+        delete[] lws;
         //dtor
     }
 
@@ -61,14 +60,13 @@ namespace yune
 
         std::fstream file;
         std::vector<std::string> options;
-        options.reserve(20);
-        file.open("renderer-options.txt");
+        file.open("yune-options.yun");
         if(file.is_open())
         {
             std::string line;
             while(getline(file, line))
             {
-                // skip comments
+                // skip comments and empty lines
                 if(line[0] == '#' || line.empty())
                     continue;
 
@@ -81,6 +79,7 @@ namespace yune
             throw RuntimeError("Please create a file named <renderer-options.txt> and provide all the options.");
 
         int i = 0;
+        //Start Processing options.
 
         //First 3 options are width, height and fullscreen
         glfw_manager.createWindow(std::stoi(options[i]), std::stoi(options[i+1]), std::stoi(options[i+2]));
@@ -88,30 +87,43 @@ namespace yune
         i += 3;
 
         //Next option specifies if compiler options are provided or not, followed by kernel file name and function name.
-        if(options[i++] == "1")
-        {
+        if(options[i] != "-")
             cl_manager.createProgram(options[i], options[i+1], options[i+2]);
-            i += 3;
-        }
         else
-        {
-            cl_manager.createProgram("", options[i], options[i+1]);
-            i += 2;
-        }
+            cl_manager.createProgram("", options[i+1], options[i+2]);
 
-        //Next options tells if GWS and LWS are provided.
-        if(options[i++] == "1")
+        i += 3;
+
+        //Next options tells if GWS is provided.
+        if(options[i] != "-")
         {
             gws[0] = std::stoi(options[i++]);
             gws[1] = std::stoi(options[i++]);
+        }
+        else
+        {
+            gws[0] = glfw_manager.framebuffer_width;
+            gws[1] = glfw_manager.framebuffer_height;
+            i+=2;;
+        }
+
+        //Next option tells if LWS is provided
+        if(options[i] != "-")
+        {
+            lws = new size_t[2];
             lws[0] = std::stoi(options[i++]);
             lws[1] = std::stoi(options[i++]);
         }
         else
-            getWorkGroupSizes();
+        {
+            lws = NULL;
+            i+=2;
+        }
 
+        //Next Option tells if there is a model file to load
+        if(options[i] != "-")
+            render_scene->loadModel(options[i], scene_data,  options[i+1], mat_data);
 
-        glfw_manager.setupGlBuffer();
         /** Since GLFW manager don't have access to camera variable, pass Camera's function as callback.
             This function is called when Camera is updated through mouse/keyboard.
          */
@@ -125,17 +137,29 @@ namespace yune
         /* Setup Buffer data to pass to CL_context. Set is_changed to true initially so path tracer
            only writes current color instead of merging it with previous.
          */
-        this->render_scene->main_camera.setBuffer(cam_data.data());
+        this->render_scene->main_camera.setBuffer(&cam_data);
         this->render_scene->main_camera.is_changed = true;
-        cl_manager.setupBuffers(glfw_manager.rbo_IDs, scene_data, cam_data);
+
+        glfw_manager.setupGlBuffer();
+        cl_manager.setupBuffers(glfw_manager.rbo_IDs, scene_data, mat_data, &cam_data);
+
+        //Pass Scene Model Data if present.
+        if(!scene_data.empty())
+        {
+            cl_int err = 0;
+            err = clSetKernelArg(cl_manager.kernel, 6, sizeof(cl_mem), &cl_manager.scene_buffer);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
+
+            err = clSetKernelArg(cl_manager.kernel, 7, sizeof(cl_mem), &cl_manager.bsdf_buffer);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
+        }
     }
 
     void Renderer::start()
     {
-        int itr = 0;
-        bool buffer_switch = true;
-        int frame_count = 0;
+        int itr = 0, frame_count = 0;
         unsigned long samples_taken = 0;
+        bool buffer_switch = true;
         double last_time, current_time, start_time = 0;
         double submit_time;             // Time when kernel was submitted to command queue.
         double exec_time = 0.0;         // Kernel execution time.
@@ -151,13 +175,10 @@ namespace yune
          */
         GL_context::Options options;
         options.gi_check = -1;
-        options.rr_threshold = -1;
         options.save_img_samples = 0;
 
-        std::string name;
-        unsigned int seed1 = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-        //std::random_device rng;
-        std::mt19937 mt_engine(seed1);
+        unsigned int mt_seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+        std::mt19937 mt_engine(mt_seed);
         std::uniform_int_distribution<unsigned int> dist(0,  std::numeric_limits<unsigned int>::max() );
         glfw_manager.showWindow();
 
@@ -369,7 +390,7 @@ namespace yune
         if(render_scene->main_camera.is_changed)
         {
             new_reset = 1;
-            cl_float* mapped_memory = (cl_float*) clEnqueueMapBuffer( cl_manager.comm_queue,
+            Cam* mapped_memory = (Cam*) clEnqueueMapBuffer( cl_manager.comm_queue,
                                                                       cl_manager.camera_buffer,
                                                                       CL_TRUE,
                                                                       CL_MAP_WRITE,
@@ -393,22 +414,13 @@ namespace yune
 
         }
 
-        // Pass the Russian Roulette Threshold.
-        if(opts.rr_threshold != glfw_manager.options.rr_threshold)
-        {
-            opts.rr_threshold = glfw_manager.options.rr_threshold;
-
-            err = clSetKernelArg(cl_manager.kernel, 3, sizeof(cl_int), &opts.rr_threshold);
-            CL_context::checkError(err, __FILE__, __LINE__ -1);
-        }
-
         // Pass GI check value. Change the reset value to 1.
         if(opts.gi_check != glfw_manager.options.gi_check)
         {
             opts.gi_check = glfw_manager.options.gi_check;
             cl_int check = opts.gi_check;
 
-            err = clSetKernelArg(cl_manager.kernel, 4, sizeof(cl_int), &check);
+            err = clSetKernelArg(cl_manager.kernel, 3, sizeof(cl_int), &check);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
             new_reset = 1;
         }
@@ -417,12 +429,12 @@ namespace yune
         if (reset != new_reset)
         {
             reset = new_reset;
-            err = clSetKernelArg(cl_manager.kernel, 5, sizeof(cl_int), &reset);
+            err = clSetKernelArg(cl_manager.kernel, 4, sizeof(cl_int), &reset);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
         }
 
         // Pass a random seed value.
-        err = clSetKernelArg(cl_manager.kernel, 6, sizeof(cl_uint), &seed);
+        err = clSetKernelArg(cl_manager.kernel, 5, sizeof(cl_uint), &seed);
         CL_context::checkError(err, __FILE__, __LINE__ -1);
 
     }
@@ -454,56 +466,4 @@ namespace yune
         FreeImage_Save(extension, bitmap, fn.data(), 0);
         delete[] img_data;
     }
-
-    void Renderer::getWorkGroupSizes()
-    {
-        gws[0] = glfw_manager.framebuffer_width;
-        gws[1] = glfw_manager.framebuffer_height;
-
-        size_t total_local_workgroup_size = cl_manager.preferred_workgroup_multiple;
-        int x, y;
-        float aspect_ratio;
-        aspect_ratio = (glfw_manager.framebuffer_width * 1.0f)/ glfw_manager.framebuffer_height;
-
-        //Find the highest multiple workgroup size that kernel can support.
-        while(total_local_workgroup_size * 2 < cl_manager.kernel_workgroup_size)
-        {
-            total_local_workgroup_size *=2;
-        }
-
-        x = total_local_workgroup_size;
-        y = 1;
-
-        //Split this total local workgroup size into 2 dimensions based on the aspect ratio of Image.
-        while( x>y )
-        {
-            x/= 2;
-            y *=  2;
-        }
-
-        if( (aspect_ratio > 1) && (x < y) )
-        {
-            x = x*y;
-            y =  x/y;
-            x = x/y;
-        }
-
-        lws[0] = x;
-        lws[1] = y;
-
-        if( lws[0] > cl_manager.target_device.max_workitem_size[0]
-                                            ||
-            lws[1] > cl_manager.target_device.max_workitem_size[1]
-          )
-        {
-            throw RuntimeError("Number of WorkItems in a dimension of Workgroup exceed Device's Max WorkItem size for that dimension. Aborting...\n", __FILE__, std::to_string(__LINE__));
-        }
-
-        if(lws[0]* lws[1] > cl_manager.target_device.wg_size)
-        {
-            throw RuntimeError("Total number of WorkItems in a Workgroup exceed Device's Max WorkItem size. Aborting...", __FILE__, std::to_string(__LINE__));
-        }
-
-    }
-
 }

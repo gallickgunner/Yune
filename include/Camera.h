@@ -1,10 +1,10 @@
 /******************************************************************************
- *  This file is part of "Yune".
+ *  This file is part of Yune".
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a Physically based Renderer using Bi-Directional Path Tracing.
- *  Right now the renderer only  works for devices that support OpenCL and OpenGL.
+ *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
+ *  researchers trying to implement Physically Based Rendering techniques.
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -75,10 +75,10 @@ namespace yune
 
             /** \brief Set values to be passed on to the Camera buffer.
              *
-             * \param[in,out] cam_data The vector holding the camera data which is passed on to the OpenCL buffer object.
+             * \param[in,out] cam_data The strucutre holding the camera data which is passed on to the OpenCL buffer object.
              *
              */
-            void setBuffer(cl_float* cam_data);
+            void setBuffer(Cam* cam_data);
 
             /** \brief Set Rotation Speed of the camera.
              *

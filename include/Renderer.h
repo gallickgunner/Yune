@@ -1,10 +1,10 @@
 /******************************************************************************
- *  This file is part of "Yune".
+ *  This file is part of Yune".
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a Physically based Renderer using Bi-Directional Path Tracing.
- *  Right now the renderer only  works for devices that support OpenCL and OpenGL.
+ *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
+ *  researchers trying to implement Physically Based Rendering techniques.
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +38,6 @@ namespace yune
      *  This class does the main work of rendering. It creates a \ref GL_context
      *  establishes OpenCL-GL shared context and sends kernels onto the GPU.
      */
-
     class Renderer
     {
         public:
@@ -56,11 +55,10 @@ namespace yune
              */
             void setup(Scene* render_scene);
 
-            /** \brief Find the most efficient local workgroup size.
-             */
-            void getWorkGroupSizes();
-
-            /** \brief Start the renderer by enqueuing "Pathtracer" kernel in a loop till the window closes.
+            /** \brief Start the renderer by enqueuing kernel in a loop till the window closes.
+             *  The start function currently implements logic for a kernel that takes 2 images. One for reading, other for writing.
+             *  This is necessary for techniques like path tracing which need to average the current result with previous.
+             *  For techniques like ray-tracing you can ignore the 2nd Image.
              */
             void start();
 
@@ -91,9 +89,10 @@ namespace yune
             void saveImage(unsigned long samples_taken, int time_passed, int fps);
 
             size_t gws[2];                      /**< Global workgroup size.*/
-            size_t lws[2];                      /**< Local workgroup size.*/
-            std::vector<cl_float> cam_data;     /**< A buffer containing Camera data for passing to the GPU.*/
-            std::vector<cl_float> scene_data;   /**< A buffer containing Scene data for passing to the GPU.*/
+            size_t* lws;                        /**< Local workgroup size. Dynamic allocation because it can be NULL if not provided through options.*/
+            Cam cam_data;                       /**< A Cam structure containing Camera data for passing to the GPU. A similar structure resides on GPU.*/
+            std::vector<Triangle> scene_data;   /**< A buffer containing Scene data for passing to the GPU.*/
+            std::vector<Material> mat_data;     /**< A buffer containing material data for passing to the GPU.*/
     };
 }
 #endif // RENDERER_H

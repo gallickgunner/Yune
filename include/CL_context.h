@@ -1,10 +1,10 @@
 /******************************************************************************
- *  This file is part of "Yune".
+ *  This file is part of Yune".
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a Physically based Renderer using Bi-Directional Path Tracing.
- *  Right now the renderer only  works for devices that support OpenCL and OpenGL.
+ *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
+ *  researchers trying to implement Physically Based Rendering techniques.
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 
 namespace yune
 {
+
     /** \brief This class manages the OpenCL context and Buffers. The class manages the releasing of memory objects, kernels etc in
      *  RAII fashion. This class is intended for 1 time use only i.e. no more than one instance.
      */
@@ -56,9 +57,10 @@ namespace yune
              *
              * \param[in] rbo_IDs       The RenderBuffer Object array on top of which the Read and Write Only OpenCL Image Objects are created.
              * \param[in] scene_data    A std::vector containing the data for the Scene to be pass on to the Buffer Object.
-             * \param[in] cam_data      A std::vector containing the data for the Camera to be pass on to the Buffer Object.
+             * \param[in] bsdf_data     A std::vector containing the data for the Material to be pass on to the Buffer Object.
+             * \param[in] cam_data      A pointer to Cam structure ontaining the data for the Camera to be pass on to the Buffer Object. A similar structure is present on GPU.
              */
-            void setupBuffers(GLuint* rbo_IDs, std::vector<float>& scene_data, std::vector<float>& cam_data);
+            void setupBuffers(GLuint* rbo_IDs, std::vector<Triangle>& scene_data, std::vector<Material>& bsdf_data, Cam* cam_data);
 
             /** \brief Display the Error message for the error code.
              *
@@ -127,7 +129,8 @@ namespace yune
             cl_command_queue comm_queue;            /**<  The OpenCL command queue.*/
             cl_kernel kernel;                       /**<  The main path-tracer kernel.*/
             cl_mem image_buffers[2];                /**<  The Image Buffer Objects used in path tracing. There are 2 for swapping role for read and write-only images. */
-            cl_mem scene_buffer;                    /**<  The Buffer Object used to hold Scene data. */
+            cl_mem scene_buffer;                    /**<  The Buffer Object used to hold Scene model data. */
+            cl_mem bsdf_buffer;                     /**<  The Buffer Object used to hold BSDF data. */
             cl_mem camera_buffer;                   /**<  The Buffer Object used to hold Camera data. */
 
             size_t kernel_workgroup_size;           /**< The maximum nubmer of Work Items in a Workgroup the kernel can afford due to memory limitations. */

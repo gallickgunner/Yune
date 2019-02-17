@@ -1,10 +1,10 @@
 /******************************************************************************
- *  This file is part of "Yune".
+ *  This file is part of Yune".
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a Physically based Renderer using Bi-Directional Path Tracing.
- *  Right now the renderer only  works for devices that support OpenCL and OpenGL.
+ *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
+ *  researchers trying to implement Physically Based Rendering techniques.
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -182,25 +182,33 @@ namespace yune
             std::cout << "Kernel local memory requirement exceeds Device's local memory.\nProgram may crash during kernel processing.\n" << std::endl;
     }
 
-    void CL_context::setupBuffers(GLuint* rbo_IDs, std::vector<float>& scene_data, std::vector<float>& cam_data)
+    void CL_context::setupBuffers(GLuint* rbo_IDs, std::vector<Triangle>& scene_data, std::vector<Material>& bsdf_data, Cam* cam_data)
     {
         cl_int err = 0;
-        //Check if buffer size exceed Device's global memory.
-        if( (scene_data.size() + cam_data.size() ) > target_device.global_mem_size)
-            std::cout << "Buffer size exceeds Device's global memory size.\nProgram may crash during kernel processing.\n" << std::endl;
 
-        //Setup 2 Image Objects over 2 GL RenderBuffer Objects and  Buffer Objects containing scene data and camera data.
+        //Check if buffer size exceed Device's global memory.
+        if( scene_data.size() > target_device.global_mem_size)
+            throw RuntimeError("Model Data size exceeds Device's global memory size.\nProgram may crash during kernel processing.");
+
+        //Setup 2 Image Objects (read/write) over 2 GL RenderBuffer Objects and  Buffer Objects containing scene data and camera data.
         image_buffers[0] = clCreateFromGLRenderbuffer(context, CL_MEM_READ_WRITE, rbo_IDs[0], &err);
         checkError(err, __FILE__, __LINE__ - 1);
 
         image_buffers[1] = clCreateFromGLRenderbuffer(context, CL_MEM_READ_WRITE, rbo_IDs[1], &err);
         checkError(err, __FILE__, __LINE__ - 1);
 
-        //scene_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, scene_data.size(), scene_data.data(), &err);
-        //checkError(err, __FILE__, __LINE__);
-
-        camera_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, cam_data.size() * sizeof(cl_float), cam_data.data(), &err);
+        camera_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(cam_data), cam_data, &err);
         checkError(err, __FILE__, __LINE__ - 1);
+
+        if(!scene_data.empty())
+        {
+            scene_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, scene_data.size(), scene_data.data(), &err);
+            checkError(err, __FILE__, __LINE__);
+
+            bsdf_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, bsdf_data.size(), bsdf_data.data(), &err);
+            checkError(err, __FILE__, __LINE__);
+        }
+
     }
 
     void CL_context::setupPlatforms()

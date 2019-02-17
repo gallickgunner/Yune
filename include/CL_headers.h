@@ -1,10 +1,10 @@
 /******************************************************************************
- *  This file is part of "Yune".
+ *  This file is part of Yune".
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a Physically based Renderer using Bi-Directional Path Tracing.
- *  Right now the renderer only  works for devices that support OpenCL and OpenGL.
+ *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
+ *  researchers trying to implement Physically Based Rendering techniques.
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,5 +48,39 @@
     #include <CL/cl_gl.h>
     #define CL_GL_SHARING_EXT "cl_khr_gl_sharing"
 #endif // if defined(__APPLE__) || defined(__MACOSX)
+
+struct Cam
+{
+    cl_float4 r1;
+    cl_float4 r2;
+    cl_float4 r3;
+    cl_float4 r4;
+    cl_float view_plane_dist;
+};
+
+struct Triangle
+{
+    cl_float4 v1;
+    cl_float4 v2;
+    cl_float4 v3;
+    cl_float4 vn1;
+    cl_float4 vn2;
+    cl_float4 vn3;
+    cl_int matID;       // total size till here = 100 bytes
+    cl_float pad[7];    // padding 28 bytes - 7 float each 4 byte
+} __attribute__((aligned(128)));
+
+struct Material
+{
+    cl_float4 emissive;
+    cl_float4 diff;
+    cl_float4 spec;
+    cl_float ior;
+    cl_float alpha_x;
+    cl_float alpha_y;
+    cl_short is_specular;
+    cl_short is_transmissive;    // total 64 bytes.
+};
+
 
 #endif // CL_HEADERS_H
