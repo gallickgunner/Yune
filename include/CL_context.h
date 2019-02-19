@@ -130,7 +130,7 @@ namespace yune
             cl_kernel kernel;                       /**<  The main path-tracer kernel.*/
             cl_mem image_buffers[2];                /**<  The Image Buffer Objects used in path tracing. There are 2 for swapping role for read and write-only images. */
             cl_mem scene_buffer;                    /**<  The Buffer Object used to hold Scene model data. */
-            cl_mem bsdf_buffer;                     /**<  The Buffer Object used to hold BSDF data. */
+            cl_mem mat_buffer;                      /**<  The Buffer Object used to hold material data. */
             cl_mem camera_buffer;                   /**<  The Buffer Object used to hold Camera data. */
 
             size_t kernel_workgroup_size;           /**< The maximum nubmer of Work Items in a Workgroup the kernel can afford due to memory limitations. */
