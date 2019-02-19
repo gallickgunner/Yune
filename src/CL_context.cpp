@@ -76,6 +76,8 @@ namespace yune
             clReleaseMemObject(image_buffers[1]);
         if(scene_buffer)
             clReleaseMemObject(scene_buffer);
+        if(mat_buffer)
+            clReleaseMemObject(mat_buffer);
         if(camera_buffer)
             clReleaseMemObject(camera_buffer);
         if(context)
