@@ -5,6 +5,8 @@
 # that the order in which the vertices and normals appear do matter as it's used to calculate face normal (AB x AC).
 # keyword "matID x" is a reference to material defined in "*.pbm" material file.
 
+#All values are considered a float3 triple, though Yune loads them as float4s due to alignment issues on GPUs.
+
 o Mesh1
 matID 2
 

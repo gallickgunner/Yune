@@ -3,6 +3,8 @@
 # and should be near 0 for metals. "alpha_x" and "alpha_y" are parameters that control slope distribution of microfacets for anisotropic
 # materials. They are equal for isotropic materials. "mirror" and "transmissive" determine whether the material is perfectly
 # specular and transparent.
+# If you are interested in the datatype Yune loads these values into, refer to the header "CL_headers.h"
+
 
 id 1
 ke 1 2 3
