@@ -49,14 +49,18 @@
     #define CL_GL_SHARING_EXT "cl_khr_gl_sharing"
 #endif // if defined(__APPLE__) || defined(__MACOSX)
 
+/* When using CL_MEM_ALLOC_HOST_PTR we don't need to worry about alignment. However when using the "USE_HOST_PTR" flag we have
+ * to provide aligned data. We try to ensure aligned memory anyways in-case we want to measure performance difference between the two flags.
+ */
 struct Cam
 {
     cl_float4 r1;
     cl_float4 r2;
     cl_float4 r3;
     cl_float4 r4;
-    cl_float view_plane_dist;
-};
+    cl_float view_plane_dist;   // total 68 bytes
+    cl_float pad[3];            // padding 12 bytes to reach 80 (next multiple of 16)
+} __attribute__((aligned(16)));
 
 struct Triangle
 {
@@ -67,8 +71,8 @@ struct Triangle
     cl_float4 vn2;
     cl_float4 vn3;
     cl_int matID;       // total size till here = 100 bytes
-    cl_float pad[7];    // padding 28 bytes - 7 float each 4 byte
-} __attribute__((aligned(128)));
+    cl_float pad[3];    // padding 12 bytes - to make it 112 (next multiple of 16)
+} __attribute__((aligned(16)));
 
 struct Material
 {
@@ -80,7 +84,7 @@ struct Material
     cl_float alpha_y;
     cl_short is_specular;
     cl_short is_transmissive;    // total 64 bytes.
-};
+} __attribute__((aligned(16)));
 
 
 #endif // CL_HEADERS_H
