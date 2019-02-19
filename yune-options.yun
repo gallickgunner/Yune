@@ -4,8 +4,8 @@
 # If an option is optional and not provided, a "-" is given in it's place.
 
 #Width, Height
-640
-480
+1280
+720
 
 #Fullscreen?
 0
@@ -14,7 +14,7 @@
 -
 
 #Kernel File name
-progressive-PT-primitive.cl
+progressive-PT.cl
 
 #Kernel Function Name
 pathtracer
@@ -22,8 +22,8 @@ pathtracer
 #GWS and LWS are not mandatory. If not provided Yune will let OpenCL runtime to automatically choose the best possible size
 
 #GWS
-640
-480
+-
+-
 
 #LWS
 -
