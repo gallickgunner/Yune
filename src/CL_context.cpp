@@ -55,6 +55,7 @@ namespace yune
         image_buffers[0] = NULL;
         image_buffers[1] = NULL;
         scene_buffer = NULL;
+        mat_buffer = NULL;
         camera_buffer = NULL;
         program = NULL;
         context = NULL;
@@ -182,7 +183,7 @@ namespace yune
             std::cout << "Kernel local memory requirement exceeds Device's local memory.\nProgram may crash during kernel processing.\n" << std::endl;
     }
 
-    void CL_context::setupBuffers(GLuint* rbo_IDs, std::vector<Triangle>& scene_data, std::vector<Material>& bsdf_data, Cam* cam_data)
+    void CL_context::setupBuffers(GLuint* rbo_IDs, std::vector<Triangle>& scene_data, std::vector<Material>& mat_data, Cam* cam_data)
     {
         cl_int err = 0;
 
@@ -197,7 +198,7 @@ namespace yune
         image_buffers[1] = clCreateFromGLRenderbuffer(context, CL_MEM_READ_WRITE, rbo_IDs[1], &err);
         checkError(err, __FILE__, __LINE__ - 1);
 
-        camera_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(cam_data), cam_data, &err);
+        camera_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(Cam), cam_data, &err);
         checkError(err, __FILE__, __LINE__ - 1);
 
         if(!scene_data.empty())
@@ -205,7 +206,7 @@ namespace yune
             scene_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, scene_data.size(), scene_data.data(), &err);
             checkError(err, __FILE__, __LINE__);
 
-            bsdf_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, bsdf_data.size(), bsdf_data.data(), &err);
+            mat_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, mat_data.size(), mat_data.data(), &err);
             checkError(err, __FILE__, __LINE__);
         }
 
