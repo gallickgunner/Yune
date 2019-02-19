@@ -143,16 +143,30 @@ namespace yune
         glfw_manager.setupGlBuffer();
         cl_manager.setupBuffers(glfw_manager.rbo_IDs, scene_data, mat_data, &cam_data);
 
-        //Pass Scene Model Data if present.
+        /* Pass Scene Model Data. If not present NULL Buffer will be passed. Since other arguments need to be passed
+         * regularly, we pass them in the loop inside start function. Scene and material data remain constant hence passed
+         * only once here.
+         */
         if(!scene_data.empty())
         {
             cl_int err = 0;
-            err = clSetKernelArg(cl_manager.kernel, 6, sizeof(cl_mem), &cl_manager.scene_buffer);
+            err = clSetKernelArg(cl_manager.kernel, 3, sizeof(cl_mem), &cl_manager.scene_buffer);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
 
-            err = clSetKernelArg(cl_manager.kernel, 7, sizeof(cl_mem), &cl_manager.bsdf_buffer);
+            err = clSetKernelArg(cl_manager.kernel, 4, sizeof(cl_mem), &cl_manager.mat_buffer);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
         }
+        else
+        {
+            cl_int err = 0;
+            err = clSetKernelArg(cl_manager.kernel, 3, sizeof(cl_mem), NULL);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
+
+            err = clSetKernelArg(cl_manager.kernel, 4, sizeof(cl_mem), NULL);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
+        }
+
+
     }
 
     void Renderer::start()
@@ -395,7 +409,7 @@ namespace yune
                                                                       CL_TRUE,
                                                                       CL_MAP_WRITE,
                                                                       (size_t) 0,
-                                                                      sizeof(cl_manager.camera_buffer),
+                                                                      sizeof(Cam),
                                                                       0,
                                                                       NULL,
                                                                       NULL,
@@ -420,7 +434,7 @@ namespace yune
             opts.gi_check = glfw_manager.options.gi_check;
             cl_int check = opts.gi_check;
 
-            err = clSetKernelArg(cl_manager.kernel, 3, sizeof(cl_int), &check);
+            err = clSetKernelArg(cl_manager.kernel, 5, sizeof(cl_int), &check);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
             new_reset = 1;
         }
@@ -429,12 +443,12 @@ namespace yune
         if (reset != new_reset)
         {
             reset = new_reset;
-            err = clSetKernelArg(cl_manager.kernel, 4, sizeof(cl_int), &reset);
+            err = clSetKernelArg(cl_manager.kernel, 6, sizeof(cl_int), &reset);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
         }
 
         // Pass a random seed value.
-        err = clSetKernelArg(cl_manager.kernel, 5, sizeof(cl_uint), &seed);
+        err = clSetKernelArg(cl_manager.kernel, 7, sizeof(cl_uint), &seed);
         CL_context::checkError(err, __FILE__, __LINE__ -1);
 
     }
