@@ -53,9 +53,35 @@ typedef struct Quad{
 
 } Quad;
 
+typedef struct Triangle{
+
+    float4 v1;
+    float4 v2;
+    float4 v3;
+    float4 vn1;
+    float4 vn2;
+    float4 vn3;
+    int matID;       // total size till here = 100 bytes
+    float pad[3];    // padding 12 bytes - to make it 112 bytes (next multiple of 16
+} Triangle;
+
+//For use with Triangle geometry. For geometric shapes material data is present with shape structure.
+typedef struct Material{
+
+    float4 emissive;
+    float4 diff;
+    float4 spec;
+    float ior;
+    float alpha_x;
+    float alpha_y;
+    short is_specular;
+    short is_transmissive;    // total 64 bytes.
+} Material;
+
 typedef struct Camera{
     Mat4x4 view_mat;
-    float view_plane_dist;
+    float view_plane_dist;  // total 68 bytes
+    float pad[3];           // 12 bytes padding to reach 80 (next multiple of 16)
 } Camera;
 
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
@@ -180,8 +206,8 @@ uint wang_hash(uint seed);
 uint xor_shift(uint seed);
 void powerHeuristic(float* weight, float light_pdf, float brdf_pdf, int beta);
 
-__kernel void pathtracer(__write_only image2d_t outputImage, __read_only image2d_t inputImage,
-                         __constant Camera* main_cam, int GI_CHECK, int reset, uint rand)
+__kernel void pathtracer(__write_only image2d_t outputImage, __read_only image2d_t inputImage, __constant Camera* main_cam, 
+                         __global Triangle* scene_data, __global Material* mat_data, int GI_CHECK, int reset, uint rand)
 {
     int img_width = get_image_width(outputImage);
     int img_height = get_image_height(outputImage);
@@ -191,7 +217,6 @@ __kernel void pathtracer(__write_only image2d_t outputImage, __read_only image2d
     if (pixel.x >= img_width || pixel.y >= img_height)
         return;
         
-    
     //create a camera ray 
     Ray eye_ray;
     float r1, r2;
