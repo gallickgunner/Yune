@@ -34,7 +34,7 @@
 
 #if defined(__APPLE__) || defined(__MACOSX)
     #include <OpenCL/opencl.h>
-    #include <OpenGL/OpennGL.h>
+    #include <OpenGL/OpenGL.h>
     #define CL_GL_SHARING_EXT "cl_apple_gl_sharing"
 
 #else
