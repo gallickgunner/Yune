@@ -46,12 +46,14 @@ namespace yune
 
             /** \brief Create OpenCL program and setup kernels.
              *
-             * \param[in] opts        OpenCL compiler options. For specifying version, the format should be as follows "-cl-std=CLx.y" where x.y represent the version (1.2, 2.0 etc)
-             * \param[in] file_name     The file name containing the kernel.
-             * \param[in] kernel_name   The kernel name contained in file "file_name"
+             * \param[in] opts      OpenCL compiler options. For specifying version, the format should be as follows "-cl-std=CLx.y" where x.y represent the version (1.2, 2.0 etc)
+             * \param[in] pt_fn     The file name containing the kernel for Path tracer/Ray-tracer or any similar Rendering tehcnique.
+             * \param[in] pt_kn     The kernel function name contained in file "pt_fn"
+             * \param[in] pp_fn     The file name containing the kernel for Post Processing effects like tonemapping, gamma correction etc.
+             * \param[in] pp_kn     The kernel function name contained in file "pp_fn"
              *
              */
-            void createProgram(std::string opts, std::string& file_name, std::string kernel_name);
+            void createProgram(std::string opts, std::string pt_fn, std::string pt_kn, std::string pp_fn, std::string pp_kn);
 
             /** \brief Setup an OpenCL context and Buffer Object.
              *
@@ -71,21 +73,6 @@ namespace yune
             static void checkError(cl_int err_code, std::string filename, int line_number);
 
         private:
-            class Platform
-            {
-                public:
-                    Platform();
-                    ~Platform();
-                    void loadInfo(cl_platform_id plat_id);
-                    void displayInfo(int i);
-
-                    cl_platform_id platform_id;
-                    std::string name;
-                    std::string vendor;
-                    std::string version;
-                    std::string profile;
-            };
-
             class Device
             {
                 public:
@@ -101,7 +88,6 @@ namespace yune
                     std::string device_openclC_ver;
                     std::string driver_ver;
                     std::string ext;
-                    bool ext_supported;
                     std::vector<size_t> max_workitem_size;
                     cl_device_type device_type;
                     cl_bool availability;
@@ -111,29 +97,53 @@ namespace yune
                     cl_ulong global_mem_size;
                     cl_ulong local_mem_size;
                     cl_ulong constant_mem_size;
+                    bool clgl_event_ext;
+                    bool clgl_sharing_ext;
             };
 
-            /** \brief Display List of OpenGL compliant devices and prompt user to choose one.
-             *
-             * \param[in] properties A cl_context_properties pointer used in setting up the device. The properties array is created in setup().
-             *
-             */
-            void setupDevices(cl_context_properties* properties);
+            class Platform
+            {
+                public:
+                    Platform();
+                    ~Platform();
+                    void loadInfo(cl_platform_id plat_id);
+                    void displayInfo(int i);
 
-            void setupPlatforms();                  /**< Display a list of OpenCL platforms and prompt user to choose one. */
+                    cl_platform_id platform_id;
+                    std::string name;
+                    std::string vendor;
+                    std::string version;
+                    std::string profile;
+                    std::vector<Device> device_list;
+            };
+
+            enum class Vendor
+            {
+                AMD,
+                NVIDIA,
+                INTEL
+            };
+
+            Vendor mapPlatformToVendor(std::string str);            /**< Helper function that maps arbitrary vendor names to a well defined Enum. */
+            void setupDevices(cl_context_properties* properties);   /**< Load the device currently assosciated with OpenGL. */
+            void setupPlatforms();                                  /**< Display a list of OpenCL platforms and devices and select a platform. */
+
 
             Platform target_platform;               /**< The OpenCL platform ID fo the selected platform. */
             Device target_device;                   /**< The OpenCL device ID of the selected device. */
             cl_context context;                     /**< The OpenCL context. */
-            cl_program program;                     /**< The OpenCL program object containing the kernel data. */
-            cl_command_queue comm_queue;            /**<  The OpenCL command queue.*/
-            cl_kernel kernel;                       /**<  The main path-tracer kernel.*/
-            cl_mem image_buffers[2];                /**<  The Image Buffer Objects used in path tracing. There are 2 for swapping role for read and write-only images. */
-            cl_mem scene_buffer;                    /**<  The Buffer Object used to hold Scene model data. */
-            cl_mem mat_buffer;                      /**<  The Buffer Object used to hold material data. */
-            cl_mem camera_buffer;                   /**<  The Buffer Object used to hold Camera data. */
+            cl_program rk_program;                  /**< The OpenCL program object containing the Rendering kernel data. */
+            cl_program ppk_program;                 /**< The OpenCL program object containing the Post-processing kernel data. */
+            cl_command_queue comm_queue;            /**< The OpenCL command queue.*/
+            cl_kernel rend_kernel;                  /**< The main path-tracer kernel.*/
+            cl_kernel pp_kernel;                    /**< The kernel for post processing effects like Tone mapping and Gamma Correction.*/
+            cl_mem image_buffers[3];                /**< Image Buffer Objects. There are 2 for swapping role between read and write-only images. Third is for postprocessing */
+            cl_mem scene_buffer;                    /**< The Buffer Object used to hold Scene model data. */
+            cl_mem mat_buffer;                      /**< The Buffer Object used to hold material data. */
+            cl_mem camera_buffer;                   /**< The Buffer Object used to hold Camera data. */
 
-            size_t kernel_workgroup_size;           /**< The maximum nubmer of Work Items in a Workgroup the kernel can afford due to memory limitations. */
+            size_t rendk_wgs;                       /**< The maximum nubmer of Work Items in a Workgroup the rendering kernel can afford due to memory limitations. */
+            size_t ppk_wgs;                         /**< The maximum nubmer of Work Items in a Workgroup the post processing kernel can afford due to memory limitations. */
             size_t preferred_workgroup_multiple;    /**< The preferred multiple the of the local workgroup size (depends on the device). */
 
             friend class Renderer;
