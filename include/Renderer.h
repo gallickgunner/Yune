@@ -41,7 +41,6 @@ namespace yune
     class Renderer
     {
         public:
-
             Renderer();                     /**< Default Constructor. */
             Renderer(Scene& render_scene);  /**< Overloaded Constructor taking \ref Scene object as input. */
             ~Renderer();                    /**< Default Destructor. */
@@ -85,11 +84,14 @@ namespace yune
             Scene* render_scene;           /**< A \ref Scene object. Contains the Model data, lights and Camera. */
 
             private:
-            void updateKernelArguments(GL_context::Options& opts, cl_int& reset, cl_uint seed, bool buffer_switch);
-            void saveImage(unsigned long samples_taken, int time_passed, int fps);
+            void updateRenderKernelArgs(bool& gi_check, cl_int& reset, cl_uint seed, bool buffer_switch);
+            void updatePostProcessingKernelArgs(cl_int reset, bool buffer_switch);
+            void saveImage(unsigned long samples_taken, int time_passed, int fps, bool hdr_check, bool buffer_switch);
 
-            size_t gws[2];                      /**< Global workgroup size.*/
-            size_t* lws;                        /**< Local workgroup size. Dynamic allocation because it can be NULL if not provided through options.*/
+            size_t rk_gws[2];                   /**< Global workgroup size for Rendeirng Kernel.*/
+            size_t ppk_gws[2];                  /**< Global workgroup size for Post-processing Kernel.*/
+            size_t* rk_lws;                     /**< Local workgroup size for Rendering Kernel. Dynamic allocation because it can be NULL if not provided through options.*/
+            size_t* ppk_lws;                   /**< Local workgroup size for Post-processing Kernel. Dynamic allocation because it can be NULL if not provided through options.*/
             Cam cam_data;                       /**< A Cam structure containing Camera data for passing to the GPU. A similar structure resides on GPU.*/
             std::vector<Triangle> scene_data;   /**< A buffer containing Scene data for passing to the GPU.*/
             std::vector<Material> mat_data;     /**< A buffer containing material data for passing to the GPU.*/
