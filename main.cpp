@@ -27,8 +27,6 @@
 #include <RuntimeError.h>
 #include <Renderer.h>
 
-
-
 using namespace yune;
 
 int main()
@@ -48,7 +46,6 @@ int main()
         std::cin.ignore();
         return EXIT_FAILURE;
     }
-
 
     return EXIT_SUCCESS;
 }
