@@ -29,6 +29,8 @@
 #include <vector>
 #include <string>
 #include <limits>
+#include <cctype>
+#include <algorithm>
 
 namespace yune
 {
@@ -40,7 +42,7 @@ namespace yune
     {
     }
 
-    CL_context::Device::Device() :  max_workitem_size(20)
+    CL_context::Device::Device() : max_workitem_size(20)
     {
     }
 
@@ -50,30 +52,39 @@ namespace yune
 
     CL_context::CL_context()
     {
-        kernel = NULL;
+        rend_kernel = NULL;
+        pp_kernel = NULL;
         comm_queue = NULL;
         image_buffers[0] = NULL;
         image_buffers[1] = NULL;
+        image_buffers[2] = NULL;
         scene_buffer = NULL;
         mat_buffer = NULL;
         camera_buffer = NULL;
-        program = NULL;
+        rk_program = NULL;
+        ppk_program = NULL;
         context = NULL;
         //ctor
     }
 
     CL_context::~CL_context()
     {
-        if(kernel)
-            clReleaseKernel(kernel);
-        if(program)
-            clReleaseProgram(program);
+        if(rend_kernel)
+            clReleaseKernel(rend_kernel);
+        if(pp_kernel)
+            clReleaseKernel(pp_kernel);
+        if(rk_program)
+            clReleaseProgram(rk_program);
+        if(ppk_program)
+            clReleaseProgram(ppk_program);
         if(comm_queue)
             clReleaseCommandQueue(comm_queue);
         if(image_buffers[0])
             clReleaseMemObject(image_buffers[0]);
         if(image_buffers[1])
             clReleaseMemObject(image_buffers[1]);
+        if(image_buffers[2])
+            clReleaseMemObject(image_buffers[2]);
         if(scene_buffer)
             clReleaseMemObject(scene_buffer);
         if(mat_buffer)
@@ -89,6 +100,7 @@ namespace yune
         try
         {
             int err, reset = 1;
+
             setupPlatforms();
 
             #if defined _WIN32
@@ -131,57 +143,104 @@ namespace yune
         }
     }
 
-    void CL_context::createProgram(std::string opts, std::string& file_name, std::string kernel_name)
+    void CL_context::createProgram(std::string opts, std::string pt_fn, std::string pt_kn, std::string pp_fn, std::string pp_kn)
     {
         cl_int err=0;
-        std::ifstream file(file_name);
-        std::string data(
-                          std::istreambuf_iterator<char>(file),
-                         (std::istreambuf_iterator<char>()          )
-                        );
-        file.close();
-        const char* str = data.c_str();
-        program = clCreateProgramWithSource(context, 1, &str, NULL, &err);
 
+        std::string rk, pk;
+        std::ifstream file, file2;
+        std::streamoff len;
+        file.open(pt_fn, std::ios::binary);
+        file2.open(pp_fn, std::ios::binary);
+
+        //Read rendering and post processing files. Let RAII handle closing of file stream.
+        file.seekg(0, std::ios::end);
+        len = file.tellg();
+        file.seekg(0, std::ios::beg);
+        rk.resize(len);
+        file.read(&rk[0], len);
+
+        file2.seekg(0, std::ios::end);
+        len = file2.tellg();
+        file2.seekg(0, std::ios::beg);
+        pk.resize(len);
+        file2.read(&pk[0], len);
+
+        const char* str1 = rk.c_str();
+        const char* str2 = pk.c_str();
+        rk_program = clCreateProgramWithSource(context, 1, &str1, NULL, &err);
+        ppk_program = clCreateProgramWithSource(context, 1, &str2, NULL, &err);
+
+        //Build Rendering Program
         if(opts.empty())
-            err = clBuildProgram(program, 1, &target_device.device_id, NULL, NULL, NULL);
+            err = clBuildProgram(rk_program, 1, &target_device.device_id, NULL, NULL, NULL);
         else
-            err = clBuildProgram(program, 1, &target_device.device_id, opts.data(), NULL, NULL);
+            err = clBuildProgram(rk_program, 1, &target_device.device_id, opts.data(), NULL, NULL);
         if(err < 0)
         {
-            std::cout << "\nProgram failed to build.." << std::endl;
+            std::cout << "\nRendering Program failed to build.." << std::endl;
 
             size_t log_size;
-            err = clGetProgramBuildInfo(program, target_device.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+            err = clGetProgramBuildInfo(rk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
             checkError(err, __FILE__, __LINE__ - 1);
 
             char log[log_size];
-            err = clGetProgramBuildInfo(program, target_device.device_id, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+            err = clGetProgramBuildInfo(rk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
             checkError(err, __FILE__, __LINE__ - 1);
             throw RuntimeError("\n" + std::string(log) + "\n");
         }
 
-        kernel = clCreateKernel(program, kernel_name.data(), &err);
+        //Build Post-processing Program
+        if(opts.empty())
+            err = clBuildProgram(ppk_program, 1, &target_device.device_id, NULL, NULL, NULL);
+        else
+            err = clBuildProgram(ppk_program, 1, &target_device.device_id, opts.data(), NULL, NULL);
+        if(err < 0)
+        {
+            std::cout << "\nPost-processing Program failed to build.." << std::endl;
+
+            size_t log_size;
+            err = clGetProgramBuildInfo(ppk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+            checkError(err, __FILE__, __LINE__ - 1);
+
+            char log[log_size];
+            err = clGetProgramBuildInfo(ppk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+            checkError(err, __FILE__, __LINE__ - 1);
+            throw RuntimeError("\n" + std::string(log) + "\n");
+        }
+
+        rend_kernel = clCreateKernel(rk_program, pt_kn.data(), &err);
         checkError(err, __FILE__, __LINE__ - 1);
 
-        // Set Kernel memory and workgroup requirements. Check if Kernel's requirements exceed device capabilities.
-        cl_ulong kernel_local_mem_size;
-        clGetKernelWorkGroupInfo(kernel, target_device.device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &kernel_workgroup_size, NULL);
-        clGetKernelWorkGroupInfo(kernel, target_device.device_id, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(size_t), &preferred_workgroup_multiple, NULL);
-        clGetKernelWorkGroupInfo(kernel, target_device.device_id, CL_KERNEL_LOCAL_MEM_SIZE, sizeof(cl_ulong), &kernel_local_mem_size, NULL);
+        pp_kernel = clCreateKernel(ppk_program, pp_kn.data(), &err);
+        checkError(err, __FILE__, __LINE__ - 1);
 
-        std::cout << "\nThe currently selected Device has the following features.." << std::endl;
-        std::cout << "Max Compute Units: " << target_device.compute_units << "\n"
-                  << "Max Workgroup Size: " << target_device.wg_size << "\n"
-                  << "Max WorkItem Size: " << target_device.max_workitem_size[0] << ", " << target_device.max_workitem_size[1] << "\n"
-                  << "Max Local Memory Size: " << target_device.local_mem_size/(1024) << " KB" << "\n" << std::endl;
+        // Check memory and workgroup requirements for kernels. Check if Kernel's requirements exceed device capabilities.
+        cl_ulong local_mem_size;
+        size_t wgs, preferred_workgroup_multiple;
 
-        std::cout << "\nThe Kernel has the following features.." << std::endl;
-        std::cout << "Kernel Workgroup Size: " << kernel_workgroup_size << "\n"
+        clGetKernelWorkGroupInfo(rend_kernel, target_device.device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &wgs, NULL);
+        clGetKernelWorkGroupInfo(rend_kernel, target_device.device_id, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(size_t), &preferred_workgroup_multiple, NULL);
+        clGetKernelWorkGroupInfo(rend_kernel, target_device.device_id, CL_KERNEL_LOCAL_MEM_SIZE, sizeof(cl_ulong), &local_mem_size, NULL);
+
+        std::cout << "\nThe Rendering Kernel has the following features.." << std::endl;
+        std::cout << "Kernel Workgroup Size: " << wgs << "\n"
                   << "Preferred WorkGroup Multiple Size: " <<  preferred_workgroup_multiple << "\n"
-                  << "Kernel Local Memory Required: " << kernel_local_mem_size/(1024) << " KB" << "\n" << std::endl;
+                  << "Kernel Local Memory Required: " << local_mem_size/(1024) << " KB" << "\n" << std::endl;
 
-        if(kernel_local_mem_size > target_device.local_mem_size)
+        if(local_mem_size > target_device.local_mem_size)
+            std::cout << "Kernel local memory requirement exceeds Device's local memory.\nProgram may crash during kernel processing.\n" << std::endl;
+
+        clGetKernelWorkGroupInfo(rend_kernel, target_device.device_id, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &wgs, NULL);
+        clGetKernelWorkGroupInfo(rend_kernel, target_device.device_id, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(size_t), &preferred_workgroup_multiple, NULL);
+        clGetKernelWorkGroupInfo(rend_kernel, target_device.device_id, CL_KERNEL_LOCAL_MEM_SIZE, sizeof(cl_ulong), &local_mem_size, NULL);
+
+        std::cout << "\nThe Post-Processing Kernel has the following features.." << std::endl;
+        std::cout << "Kernel Workgroup Size: " << wgs << "\n"
+                  << "Preferred WorkGroup Multiple Size: " <<  preferred_workgroup_multiple << "\n"
+                  << "Kernel Local Memory Required: " << local_mem_size/(1024) << " KB" << "\n" << std::endl;
+
+        if(local_mem_size > target_device.local_mem_size)
             std::cout << "Kernel local memory requirement exceeds Device's local memory.\nProgram may crash during kernel processing.\n" << std::endl;
     }
 
@@ -193,11 +252,14 @@ namespace yune
         if( scene_data.size() > target_device.global_mem_size)
             throw RuntimeError("Model Data size exceeds Device's global memory size.\nProgram may crash during kernel processing.");
 
-        //Setup 2 Image Objects (read/write) over 2 GL RenderBuffer Objects and  Buffer Objects containing scene data and camera data.
+        //Setup Image Buffers for reading/writing and Post processing. Also setup Buffer Objects containing scene data and camera data.
         image_buffers[0] = clCreateFromGLRenderbuffer(context, CL_MEM_READ_WRITE, rbo_IDs[0], &err);
         checkError(err, __FILE__, __LINE__ - 1);
 
         image_buffers[1] = clCreateFromGLRenderbuffer(context, CL_MEM_READ_WRITE, rbo_IDs[1], &err);
+        checkError(err, __FILE__, __LINE__ - 1);
+
+        image_buffers[2] = clCreateFromGLRenderbuffer(context, CL_MEM_READ_WRITE, rbo_IDs[2], &err);
         checkError(err, __FILE__, __LINE__ - 1);
 
         camera_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(Cam), cam_data, &err);
@@ -217,41 +279,75 @@ namespace yune
     void CL_context::setupPlatforms()
     {
         int plat_choice;
-        cl_uint num_plat =0, err=0;
-        clGetPlatformIDs(5, NULL, &num_plat);
+        cl_uint num_plat =0, num_dev=0, err=0;
+        clGetPlatformIDs(0, NULL, &num_plat);
         if(num_plat == 0)
             throw std::runtime_error("Failed to detect any platform.");
 
-        // List of OpenCL platforms.
+        //Display platform information on which OpenGL context was created.
+        /*std::string renderer = (const char*) (glGetString(GL_RENDERER));
+        std::string vendor = (const char*) (glGetString(GL_VENDOR));
+
+        std::cout << "Platform Information on which OpenGL context was created.\n\n"
+                  << std::left << std::setw(10) << "VENDOR" << ": " << vendor << "\n"
+                  << std::left << std::setw(10) << "RENDERER" << ": " << renderer << "\n" << std::endl;*/
+
+        std::string vendor = "AMD";
+        CL_context::Vendor vd = mapPlatformToVendor(vendor);
+
+        // List of OpenCL platforms and Devices
         std::vector<cl_platform_id> platforms(num_plat);
         std::vector<Platform> platform_list;
 
         err = clGetPlatformIDs(num_plat, platforms.data(), NULL);
         checkError(err, __FILE__, __LINE__ - 1);
 
-        std::cout << platforms.size() << " OpenCL platform(s) detected..\n" << std::endl;
-        std::cout << "*PLATFORM INFORMATION*" << std::endl;
+        std::cout << "Platform Information on which OpenCL context can be created." << std::endl;
+        std::cout << platforms.size() << "OpenCL platform(s) detected..\n" << std::endl;
+        bool clgl_interop = false;
+        int plat_idx = -1;
 
         for(int i = 0; i < platforms.size(); i++)
         {
             platform_list.push_back(Platform());
             platform_list[i].loadInfo(platforms[i]);
             platform_list[i].displayInfo(i);
+
+            //Query for Device information.
+            err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 0, NULL, &num_dev);
+            checkError(err, __FILE__, __LINE__ - 1);
+
+            if(num_dev == 0)
+            {
+                std::cout << "No Devices detected on this platform..." << std::endl;
+                continue;
+            }
+
+            std::vector<cl_device_id> devices(num_dev);
+            err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, num_dev, devices.data(), NULL);
+            checkError(err, __FILE__, __LINE__ - 1);
+
+            for(int j = 0; j < devices.size(); j++)
+            {
+                platform_list[i].device_list.push_back(Device());
+                platform_list[i].device_list[j].loadInfo(devices[j]);
+                platform_list[i].device_list[j].displayInfo(j);
+                if(platform_list[i].device_list[j].clgl_sharing_ext)
+                    clgl_interop = true;
+            }
+            if(!clgl_interop)
+                std::cout << "No devices present on this platform that support OpenCL-GL interoperability.\n" << std::endl;
+
+            //Set platform same as the platform OpenGL was created on.
+            CL_context::Vendor temp = mapPlatformToVendor(platform_list[i].vendor);
+            if (temp == vd)
+            {
+                target_platform = platform_list[i];
+                plat_idx = i;
+            }
         }
 
-        // If more than 1 platform detected, ask from user...
-        if(platforms.size() > 1)
-        {
-            std::cout << "\nPress any number between " << 0 << " and " << platforms.size()-1
-                      << " to choose a platform" << std::endl;
-            std::cin >> plat_choice;
-            target_platform = platform_list[plat_choice];
-        }
-        else
-        {
-            std::cout << "\nSelected Platform 0..." << std::endl;
-            target_platform = platform_list[0];
-        }
+        std::cout << "\nSelected Platform " << plat_idx << std::endl;
     }
 
     void CL_context::setupDevices(cl_context_properties* properties)
@@ -259,6 +355,8 @@ namespace yune
         int dev_choice = 0; // default to first entry
         size_t num_devices;
         cl_int err;
+        cl_device_id device_id;
+
         // Load extension
         clGetGLContextInfoKHR_fn clGetGLContextInfoKHR = NULL;
 
@@ -270,54 +368,51 @@ namespace yune
         if(!clGetGLContextInfoKHR)
             throw std::runtime_error("\"clGetGLContextInfoKHR\" Function failed to load.");
 
-        err = clGetGLContextInfoKHR(properties, CL_DEVICES_FOR_GL_CONTEXT_KHR, 0, NULL, &num_devices);
+        err = clGetGLContextInfoKHR(properties, CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR, sizeof(cl_device_id), &device_id, &num_devices);
         checkError(err, __FILE__, __LINE__ - 1);
 
         num_devices = num_devices/sizeof(cl_device_id);
-
         if(num_devices == 0)
         {
-            std::string error = "\nEither there is no device available or they don't support \"";
-            error = error + CL_GL_SHARING_EXT + "\" extension.";
+            std::string error = "\nEither there is no device available or they don't support OpenCL-GL interoperability\"";
             throw std::runtime_error(error);
         }
 
-        std::vector<cl_device_id> devices(num_devices);
-        std::vector<Device> device_list;
-
-        err = clGetGLContextInfoKHR(properties, CL_DEVICES_FOR_GL_CONTEXT_KHR, sizeof(cl_device_id)*num_devices, devices.data(), NULL);
-        checkError(err, __FILE__, __LINE__ - 1);
-
-        std::cout << "\n" << devices.size() << " OpenCL Device(s) detected..\n" << std::endl;
-        std::cout << "*DEVICE INFORMATION*" << std::endl;
-        for(int i = 0; i < devices.size(); i++)
+        for(int i = 0; i < target_platform.device_list.size(); i++)
         {
-            device_list.push_back(Device());
-            device_list[i].loadInfo(devices[i]);
-            device_list[i].displayInfo(i);
+            if(device_id == target_platform.device_list[i].device_id)
+            {
+                target_device = target_platform.device_list[i];
+                std::cout << "Selected Device " << i << std::endl;
+            }
         }
+        std::cout << "\nPress Enter to continue.." << std::endl;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
 
-        if(devices.size() > 1)
-        {
-            std::cout << "\nPress any number between " << 0 << " and " << devices.size()-1
-                      << " to choose a device" << std::endl;
-            std::cin >> dev_choice;
-            target_device = device_list[dev_choice];
-        }
-        else
-        {
-            std::cout << "\nSelected Device 0.\nPress Enter to continue..." << std::endl;
-            std::cin.ignore();
-            target_device = device_list[0];
-        }
+    CL_context::Vendor CL_context::mapPlatformToVendor(std::string str)
+    {
+        CL_context::Vendor vd;
+        std::transform(str.begin(), str.end(), str.begin(), ( int(&)(int) )std::tolower);
+
+        if(str.find("ati") != std::string::npos )
+            vd = Vendor::AMD;
+        else if(str.find("amd") != std::string::npos )
+            vd = Vendor::AMD;
+        else if(str.find("advanced micro devices") != std::string::npos )
+            vd = Vendor::AMD;
+        else if(str.find("nvidia") != std::string::npos )
+            vd = Vendor::NVIDIA;
+        else if(str.find("intel") != std::string::npos )
+            vd = Vendor::INTEL;
+        return vd;
     }
 
     void CL_context::Platform::loadInfo(cl_platform_id plat_id)
     {
         platform_id = plat_id;
-        size_t len = 0;
-
         {
+            size_t len = 0;
             clGetPlatformInfo(platform_id, CL_PLATFORM_NAME, 0, NULL, &len);
             char arr[len];
             clGetPlatformInfo(platform_id, CL_PLATFORM_NAME, len, arr, NULL);
@@ -325,6 +420,7 @@ namespace yune
         }
 
         {
+            size_t len = 0;
             clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR, 0, NULL, &len);
             char arr[len];
             clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR, len, arr, NULL);
@@ -332,6 +428,7 @@ namespace yune
         }
 
         {
+            size_t len = 0;
             clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, 0, NULL, &len);
             char arr[len];
             clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, len, arr, NULL);
@@ -339,6 +436,7 @@ namespace yune
         }
 
         {
+            size_t len = 0;
             clGetPlatformInfo(platform_id, CL_PLATFORM_PROFILE, 0 , NULL, &len);
             char arr[len];
             clGetPlatformInfo(platform_id, CL_PLATFORM_PROFILE, len, arr, NULL);
@@ -348,12 +446,13 @@ namespace yune
 
     void CL_context::Platform::displayInfo(int i)
     {
-        std::cout << "-----------------------------------------" << i << "--------------------------------------\n"
+        std::cout << "Platform " << i << "\n"
+                  << "-------------------------------------------------------------------------------\n"
                   << std::left << std::setw(35) << "Platform Name" << ": " << name << "\n"
                   << std::left << std::setw(35) << "Vendor Name" << ": " << vendor << "\n"
                   << std::left << std::setw(35) << "OpenCL Profile" << ": " << profile << "\n"
                   << std::left << std::setw(35) << "OpenCL Version Supported" << ": " << version << "\n"
-                  << "--------------------------------------------------------------------------------"
+                  << "--------------------------------------------------------------------------------\n"
                   << std::endl;
     }
 
@@ -411,6 +510,13 @@ namespace yune
 
     void CL_context::Device::displayInfo(int i)
     {
+        if(ext.find(CL_GL_SHARING_EXT) == std::string::npos)
+        {
+            clgl_sharing_ext = false;
+            return;
+        }
+        clgl_sharing_ext = true;
+
         std::string type;
         if(device_type & CL_DEVICE_TYPE_CPU)
             type = "CPU";
@@ -419,21 +525,25 @@ namespace yune
         else if(device_type & CL_DEVICE_TYPE_ACCELERATOR)
             type = "ACCELERATOR";
 
+        if(ext.find("cl_khr_gl_event") != std::string::npos)
+            clgl_event_ext = true;
+        else
+            clgl_event_ext = false;
 
-        std::string ext1("cl_khr_gl_event");
-        if(ext.find(ext1) != std::string::npos)
-            ext_supported = true;
-
-        std::cout << "-----------------------------------------" << i << "--------------------------------------\n"
+        std::cout << "Device " << i << "\n"
+                  << "-------------------------------------------------------------------------------\n"
                   << std::left << std::setw(35) << "Device Name" << ": " << name << "\n"
                   << std::left << std::setw(35) << "Device Type" << ": " << type << "\n"
                   << std::left << std::setw(35) << "OpenCL Version Supported" <<  ": " << device_ver << "\n"
                   << std::left << std::setw(35) << "OpenCL Software Driver Version" << ": " << driver_ver << "\n"
                   << std::left << std::setw(35) << "OpenCL-C Version Supported" << ": " <<  device_openclC_ver << "\n"
                   << std::left << std::setw(35) << "Device Available" << ": " << (availability ? "Yes" : "No") << "\n"
+                  << std::left << std::setw(35) << "cl_khr_gl_event Supported" << ": " << (clgl_event_ext ? "Yes" : "No") << "\n"
+                  << std::left << std::setw(35) << std::string(CL_GL_SHARING_EXT) + " Supported" << ": " << (clgl_sharing_ext ? "Yes" : "No") << "\n"
                   << std::left << std::setw(35) << "SP Floating Point Supported" << ": " << ( (fp_support & (CL_FP_ROUND_TO_NEAREST|CL_FP_INF_NAN) ) ? "Yes" : "No") << "\n"
                   << std::left << std::setw(35) << "Max Compute Units" << ": " << compute_units << "\n"
                   << std::left << std::setw(35) << "Max Workgroup Size" << ": " << wg_size << "\n"
+                  << std::left << std::setw(35) << "Max WorkItem Size" << ": " << max_workitem_size[0] << ", " << max_workitem_size[1] << "\n"
                   << std::left << std::setw(35) << "Max Global Memory Size" << ": " << global_mem_size/(1024*1024) << " MB" << "\n"
                   << std::left << std::setw(35) << "Max Local Memory Size" << ": " << local_mem_size/(1024) << " KB" << "\n"
                   << std::left << std::setw(35) << "Max Constant Memory Size" << ": " << constant_mem_size/ (1024) << " KB" << "\n"
