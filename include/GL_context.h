@@ -26,8 +26,8 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <Gui.h>
 #include <Eigen_typedefs.h>
-#include <nanogui/nanogui.h>
 #include <functional>
 #include <atomic>
 
@@ -75,11 +75,9 @@ namespace yune
             int framebuffer_height;             /**< Height of the Framebuffer. */
 
         private:
-
             friend class Renderer;
             static std::function<void(const Vec4f&, float, float)> cameraUpdateCallback;   /**< The function pointer to the Camera Update Callback function. */
-
-            void setupWidgets();        /**< Setup Widgets. */
+            static Gui* gui;             /**< A Gui object for setting up some simple widgets. */
             GLFWmonitor* prim_monitor;  /**< GLFW monitor pointer storing primary monitor. */
             const GLFWvidmode* mode;    /**< GLFW Video mode pointer. */
             GLuint fbo_ID;              /**< OpenGL FrameBuffer Object ID */
@@ -88,7 +86,6 @@ namespace yune
             float old_cursor_y;         /**< Store the previous cursor Y coordinate.*/
             bool space_flag;            /**< Store if the Space Key is in pressed state.*/
             bool is_fullscreen;         /**< A flag determining whether the window is fullscreen.*/
-
 
             /** \name GLFW Callbacks
              *  Refer to the GLFW docs for details on the callback function syntax.
@@ -102,33 +99,6 @@ namespace yune
             static void dropCallback(GLFWwindow *w, int count, const char **filenames);
             static void scrollCallback(GLFWwindow *w, double x, double y);
             static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
-            ///@}
-
-            /**
-             * \name NanoGUI attributes.
-             *  Variables for use by NanoGUI.
-             */
-            ///@{
-            typedef struct Options
-            {
-                int save_img_samples;
-                int gi_check;
-                bool start;
-                bool stop;
-                bool save_img;
-            } Options;                              /**< An Options structure to store the values of options exposed by GUI. Accessed by \ref Renderer to update kernel arguments. */
-            static nanogui::Screen* screen;         /**< A pointer to nanogui::Screen. It's a wrapper around a GLFW window. Refer to nanogui docs for details. */
-            nanogui::Window* panel;                 /**< A pointer to nanogui::Window. Used as a base panel for widgets. Refer to nanogui docs for details. */
-            nanogui::Window* profiler_window;       /**< A pointer to nanogui::Window. Used as a base panel for widgets. Refer to nanogui docs for details. */
-            nanogui::Theme* panel_theme;            /**< A pointer to nanogui::Theme */
-            nanogui::IntBox<int>* fps;              /**< Text box to display FPS. This is **not** averaged FPS. */
-            nanogui::FloatBox<float>* mspf_avg;     /**< Text box to display milliseconds per frame. This is averaged over 1 second. */
-            nanogui::FloatBox<float>* mspk_avg;     /**< Text box to display kernel execution time. This is averaged over 1 second if kernel takes less than 1 second. */
-            nanogui::IntBox<int>* render_time;      /**< Text box to display render time. */
-            nanogui::IntBox<int>* tot_samples;      /**< Text box to display total samples */
-            nanogui::TextBox* save_img_name;         /**< Text box to store the filename for saved images. */
-            nanogui::TextBox* save_ext;              /**< Text box to store the extension of the image saved. */
-            Options options;                        /**< An Options object. */
             ///@}
     };
 }
