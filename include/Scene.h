@@ -35,8 +35,6 @@ namespace yune
     class Scene
     {
         public:
-
-
             Scene();
             Scene(Camera main_cam);
             ~Scene();
@@ -44,7 +42,6 @@ namespace yune
             void loadModel(std::string objfile, std::vector<Triangle>& scene_data, std::string matfile, std::vector<Material>& mat_data);
 
             Camera main_camera;
-       // private:
 
 
     };
