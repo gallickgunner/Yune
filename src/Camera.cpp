@@ -29,7 +29,7 @@
 namespace yune
 {
 
-    Camera::Camera() : y_FOV(60.0f), view_to_world_mat(), rotation_speed(0.25f), move_speed(0.4f)
+    Camera::Camera() : y_FOV(60.0f), view_to_world_mat(), rotation_speed(0.25f), move_speed(0.3f)
     {
         //ctor
         setViewMatrix(Vec4f(1.f, 0.f, 0.f, 0.f),  // side
@@ -41,7 +41,7 @@ namespace yune
         is_changed = true;
     }
 
-    Camera::Camera(float y_FOV) : y_FOV(y_FOV), view_to_world_mat(), rotation_speed(0.25f), move_speed(0.4f)
+    Camera::Camera(float y_FOV, float rot_speed, float mov_speed) : y_FOV(y_FOV), view_to_world_mat(), rotation_speed(rot_speed), move_speed(mov_speed)
    {
         setViewMatrix(Vec4f(1.f, 0.f, 0.f, 0.f),  // side
                       Vec4f(0.f, 1.f, 0.f, 0.f),  // up
