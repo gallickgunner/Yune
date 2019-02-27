@@ -4,7 +4,7 @@
 #define RR_THRESHOLD    3
 #define WALL_SIZE       6
 #define SPHERE_SIZE     2
-#define LIGHT_SIZE      2
+#define LIGHT_SIZE      1
 
 typedef struct Mat4x4{
     float4 r1;
@@ -90,32 +90,32 @@ __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
 
 __constant Sphere spheres[2] = {  {  (float4)(2.f, -2.f, -6.f, 1.f),
                                                (float4)(0.f, 0.f, 0.f, 0.f),
-                                               (float4)(0.f, 0.f, 0.f, 0.f),
-                                               (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                                1.5f, 10000.0f
+                                               (float4)(0.811f, 0.501f, 0.3215f, 0.f),
+                                               (float4)(0.1f, 0.1f, 0.1f, 0.f),
+                                                1.5f, 50.0f
                                             },
 
-                                             { (float4)(-4.f, -2.f, -6.f, 1.f),
+                                             { (float4)(-5.f, -3.f, -8.f, 1.f),                                            
                                                (float4)(0.f, 0.f, 0.f, 0.f),
-                                               (float4)(0.6f, 0.6f, 0.6f, 0),
-                                               (float4)(0.2f, 0.2f, 0.2f, 0),
+                                               (float4)(0.9f, 0.9f, 0.9f, 0),
+                                               (float4)(0.0f, 0.0f, 0.0f, 0),
                                                1.0f, 10.0f
                                              }
                                            };
 
-__constant Quad light_sources[LIGHT_SIZE] = { {     (float4)(-2.0f, 5.f, -6.5f, 1.f),   //pos
+__constant Quad light_sources[2] = { {     (float4)(-1.0f, 5.f, -6.5f, 1.f),   //pos
                                                     (float4)(0.f, -1.f, 0.f, 0.f),      //norm
-                                                    (float4)(14.f, 14.f, 14.f, 0.f),    //emissive col
+                                                    (float4)(28.f, 28.f, 28.f, 0.f),    //emissive col
                                                     (float4)(0.f, 0.f, 0.f, 0.f),       //diffuse col
                                                     (float4)(0.f, 0.f, 0.f, 0.f),       //specular col
-                                                    (float4)(4.f, 0.f, 0.f, 0.f),       //edge_l
-                                                    (float4)(0.f, 0.f, 1.f, 0.f),       //edge_w
+                                                    (float4)(2.f, 0.f, 0.f, 0.f),       //edge_l
+                                                    (float4)(0.f, 0.f, 1.0f, 0.f),       //edge_w
                                                     0.f                                 //phong exponent
                                                },
 
                                               {     (float4)(-6.0f, 0.5f, -4.0f, 1.f),
                                                     (float4)(1.f, 0.f, 0.f, 0.f),
-                                                    (float4)(14.f, 14.f, 14.f, 0.f),
+                                                    (float4)(8.f, 8.f, 8.f, 0.f),
                                                     (float4)(0.f, 0.f, 0.f, 0.f),
                                                     (float4)(0.f, 0.f, 0.f, 0.f),
                                                     (float4)(0.f, 2.f, 0.f, 0.f),
@@ -128,9 +128,9 @@ __constant Quad walls[WALL_SIZE] = { {   (float4)(-6.f, -4.f, -9.f, 1.f),     //
                                          (float4)(0.f, 1.f, 0.f, 0.f),
                                          (float4)(0.f, 0.f, 0.f, 0.f),
                                          (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
+                                         (float4)(0.0f, 0.0f, 0.0f, 0.f),
                                          (float4)(12.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 10.f, 0.f), 60.f
+                                         (float4)(0.f, 0.f, 10.f, 0.f), 300.f
                                        },
 
                                        { (float4)(-6.f, 5.f, -9.f, 1.f),      // top wall
@@ -146,27 +146,27 @@ __constant Quad walls[WALL_SIZE] = { {   (float4)(-6.f, -4.f, -9.f, 1.f),     //
                                          (float4)(-1.f, 0.f, 0.f, 0.f),
                                          (float4)(0.f, 0.f, 0.f, 0.f),
                                          (float4)(0.630f, 0.058f, 0.062f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
+                                         (float4)(0.0, 0.0f, 0.0f, 0.f),
                                          (float4)(0.f, -9.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 10.f, 0.f), 60.f
+                                         (float4)(0.f, 0.f, 10.f, 0.f), 100.f
                                        },
 
                                        { (float4)(-6.f, 5.f, -9.f, 1.f),     //left wall
                                          (float4)(1.f, 0.f, 0.f, 0.f),
                                          (float4)(0.f, 0.f, 0.f, 0.f),
                                          (float4)(0.132f, 0.406f, 0.061f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
+                                         (float4)(0.0f, 0.0f, 0.0f, 0.f),
                                          (float4)(0.f, -9.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 10.f, 0.f), 60.f
+                                         (float4)(0.f, 0.f, 10.f, 0.f), 100.f
                                        },
 
                                        { (float4)(-6.f, 5.f, -9.f, 0.f),     //back wall
                                          (float4)(0.f, 0.f, 1.f, 0.f),
                                          (float4)(0.f, 0.f, 0.f, 0.f),
                                          (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
+                                         (float4)(0.150f, 0.15f, 0.15f, 0.f),
                                          (float4)(0.f, -9.f, 0.f, 0.f),
-                                         (float4)(12.f, 0.f, 0.f, 0.f), 260.f
+                                         (float4)(12.f, 0.f, 0.f, 0.f), 150.f
                                        },
 
                                        { (float4)(-6.f, 5.f, 1.f, 0.f),     //front wall
@@ -201,6 +201,7 @@ float calcPhongPDF(float4 w_i, float4 w_o, HitInfo hit_info);
 float calcCosPDF(float4 w_i, HitInfo hit_info);
 
 // Helper Functions
+float4 inverseGammaCorrect(float4 color);
 float getYluminance(float4 color);
 uint wang_hash(uint seed);
 uint xor_shift(uint seed);
@@ -349,7 +350,7 @@ bool traceRay(Ray* ray, HitInfo* hit_info, int exclude_lightID)
                 }
                 
                 //Check intersection with light sources.
-                if(i == 1 || i == 3)
+                if(i == 1)// || i == 3)
                 {
                     int j = 0;
                     
@@ -357,9 +358,6 @@ bool traceRay(Ray* ray, HitInfo* hit_info, int exclude_lightID)
                         j = 0;
                     else
                         j = 1;
-                    
-                    if(j == exclude_lightID)
-                        continue;
                         
                     temp = hit_info->hit_point - light_sources[j].pos;
                     proj1 = dot(temp, light_sources[j].edge_l);
@@ -375,7 +373,8 @@ bool traceRay(Ray* ray, HitInfo* hit_info, int exclude_lightID)
                     {
                         hit_info->quad_ID = -1;
                         hit_info->light_ID = j;
-                        flag = true;                    
+                        if(j != exclude_lightID)
+                            flag = true;                    
                     }
                 }                
                 if(flag && ray->is_shadow_ray)
@@ -394,7 +393,7 @@ float4 shading(Ray ray, int GI_CHECK, uint* seed)
         return BACKGROUND_COLOR;
     
     if(hit_info.light_ID >= 0)
-        return (float4) (1.f, 1.f, 1.f, 1.f);   
+        return light_sources[hit_info.light_ID].emissive_col;
                     
     
     float4 direct_color, indirect_color, throughput;    
@@ -409,6 +408,7 @@ float4 shading(Ray ray, int GI_CHECK, uint* seed)
     if(GI_CHECK)
     {   
         int x = 0;
+        // Bug on AMD platforms. While(true) yields darker images.
         for(int i = 0; i < 100000; i++)
         //while(true)
         {
@@ -420,9 +420,7 @@ float4 shading(Ray ray, int GI_CHECK, uint* seed)
             r = *seed / (float) UINT_MAX;   
             
             if(hit_info.sphere_ID >= 0)
-            {
-                spec_prob = length(spheres[hit_info.sphere_ID].specular_col);
-            }
+                spec_prob = length(spheres[hit_info.sphere_ID].specular_col);            
             else if (hit_info.quad_ID >= 0)
                 spec_prob = length(walls[hit_info.quad_ID].specular_col);
             
@@ -431,13 +429,11 @@ float4 shading(Ray ray, int GI_CHECK, uint* seed)
             else
                 cosineWeightedHemisphere(&new_ray, &pdf, hit_info, seed);            
             
-            // If GI_ray hits nothing, accumulate background color.
-            if(!traceRay(&new_ray, &new_hitinfo, -1) || pdf == 0.0f)
+            // If GI_ray hits nothing or pdf is zero or if ray hits light source return.
+            // Note that in normal path tracing we would have skipped an iteration upon hitting a light source. But in Progressive path tracing
+            // we return i.e. we ignore the sample completely since we are taking samples continuously.
+            if(!traceRay(&new_ray, &new_hitinfo, -1) || pdf == 0.0f || new_hitinfo.light_ID >= 0)
                 break;
-            
-            // Skip this iteration as ray hits light source.
-            if(new_hitinfo.light_ID >= 0)
-                continue;
                 
             //If it hits object, accumulate the brdf  and geometry terms.
             throughput = throughput * evaluateBRDF(new_ray.dir, -ray.dir, hit_info) * max(dot(new_ray.dir, hit_info.normal), 0.0f) / pdf; 
@@ -446,7 +442,6 @@ float4 shading(Ray ray, int GI_CHECK, uint* seed)
              * that the path survives. The termination probability is (1 - Yluminance). If the path survives boost the energy by
              * (1/p)
              */
-            
             if(x > RR_THRESHOLD)
             {       
                 float p = min(getYluminance(throughput), 0.95f);
@@ -462,7 +457,6 @@ float4 shading(Ray ray, int GI_CHECK, uint* seed)
             hit_info = new_hitinfo;
             ray = new_ray;
             x++;
-            
         }
     }
     return direct_color + indirect_color;
@@ -472,16 +466,21 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
 {   
     float4 brdf_sample = (float4) (0.f, 0.f, 0.f, 0.f);
     float4 light_sample = (float4) (0.f, 0.f, 0.f, 0.f);
+    float4 emission;
     float4 w_i;
-    float light_pdf, brdf_pdf, distance, mis_weight, cosine_falloff, spec_prob, r;
+    float light_pdf, brdf_pdf, mis_weight, spec_prob, r;
     
-    //We use MIS with Power Heuristic. Currently Struggling with implementing MIS. MIS returns darker images and I don't know if it's intended or a bug.
+    //We use MIS with Power Heuristic. The exponent can be set to 1 for balance heuristic.
+    //Emission 
+    if(hit_info.quad_ID >= 0)
+        emission = walls[hit_info.quad_ID].emissive_col;
+    else
+        emission = spheres[hit_info.sphere_ID].emissive_col;
+    
     //Direct Light Sampling
     int j = sampleLights(hit_info, &light_pdf, &w_i, seed);
-    if(j == -1)
-        return light_sample;
-    distance = dot(w_i, w_i);
-    w_i = normalize(w_i);
+    if(j == -1 || light_pdf == 0.0f)
+        return light_sample + emission;
     
     Ray shadow_ray = {hit_info.hit_point + w_i * EPSILON, w_i, INFINITY, true};
     HitInfo shadow_hitinfo = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
@@ -492,8 +491,7 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
         *seed = xor_shift(*seed);
         r = *seed / (float) UINT_MAX;   
         
-        //Use probability to pick either diffuse or glossy pdf
-        
+        //Use probability to pick either diffuse or glossy pdf        
         if(hit_info.sphere_ID >= 0)
             spec_prob = length(spheres[hit_info.sphere_ID].specular_col);        
         else if (hit_info.quad_ID >= 0)
@@ -503,18 +501,19 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
             brdf_pdf = calcPhongPDF(w_i, -ray.dir, hit_info);
         else
             brdf_pdf = calcCosPDF(w_i, hit_info);
-        
+
         mis_weight =  light_pdf;        
-        powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 2);
-        cosine_falloff = max(dot(w_i, hit_info.normal), 0.0f) * max(dot(-(w_i), light_sources[j].norm), 0.0f);
+        powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 1);
         
-        light_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * cosine_falloff / distance;          
-        //light_sample *=  mis_weight/light_pdf;
-        light_sample *=  1/light_pdf;
+        light_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * max(dot(w_i, hit_info.normal), 0.0f);
+        light_sample *=  mis_weight/light_pdf;
         
+        //Commented lines for comparing with/without MIS
+        //light_sample *=  1/light_pdf;
     }
+    //return light_sample + emission;   
     
-    return light_sample;   
+    light_sample = light_sample + emission;
     
     // BRDF Sampling
     Ray brdf_sample_ray;
@@ -535,12 +534,10 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
        return light_sample;
     else if(new_hitinfo.light_ID != j)
         return light_sample;
-        
+
     mis_weight = brdf_pdf;
-    powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 2);
-    
-    cosine_falloff = max(dot(brdf_sample_ray.dir, hit_info.normal), 0.0f);
-    brdf_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * cosine_falloff;
+    powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 1);
+    brdf_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * max(dot(w_i, hit_info.normal), 0.0f);
     brdf_sample *=  mis_weight / brdf_pdf;
     
     return (light_sample + brdf_sample);
@@ -548,7 +545,7 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
 
 float4 evaluateBRDF(float4 w_i, float4 w_o, HitInfo hit_info)
 {
-    float4 diffuse, specular, refl_vec;
+    float4 emissive, diffuse, specular, refl_vec;
     float mirror_config;
     
     refl_vec = (2*dot(w_i, hit_info.normal)) *hit_info.normal - w_i;
@@ -557,16 +554,20 @@ float4 evaluateBRDF(float4 w_i, float4 w_o, HitInfo hit_info)
     if(hit_info.quad_ID >= 0)
     {
         mirror_config = pow(max(dot(w_o, refl_vec), 0.0f), walls[hit_info.quad_ID].phong_exponent);       
+        //diffuse = inverseGammaCorrect(walls[hit_info.quad_ID].diffuse_col) * INV_PI;
+        emissive = walls[hit_info.quad_ID].emissive_col;
         diffuse = walls[hit_info.quad_ID].diffuse_col * INV_PI;
         specular = walls[hit_info.quad_ID].specular_col * mirror_config * (walls[hit_info.quad_ID].phong_exponent+2) * INV_PI * 0.5f;
     }
     else
     {       
         mirror_config = pow(max(dot(w_o, refl_vec), 0.0f), spheres[hit_info.sphere_ID].phong_exponent);        
+        //diffuse = inverseGammaCorrect(spheres[hit_info.sphere_ID].diffuse_col) * INV_PI;
+        emissive = spheres[hit_info.sphere_ID].emissive_col;
         diffuse = spheres[hit_info.sphere_ID].diffuse_col * INV_PI;
         specular = spheres[hit_info.sphere_ID].specular_col * mirror_config * (spheres[hit_info.sphere_ID].phong_exponent+2) * INV_PI * 0.5f;
     }
-    return (diffuse + specular);
+    return (emissive + diffuse + specular);
     
 }
 
@@ -586,10 +587,11 @@ int sampleLights(HitInfo hit_info, float* light_pdf, float4* w_i, uint* seed)
         
         temp_wi = (light_sources[i].pos + r1*light_sources[i].edge_l + r2*light_sources[i].edge_w) - hit_info.hit_point;    
         distance = dot(temp_wi, temp_wi);
+        
         w_is[i] = temp_wi;  
         temp_wi = normalize(temp_wi);        
         
-        cosine_falloff = max(dot(temp_wi, hit_info.normal), 0.0f) * max(dot(-(temp_wi), light_sources[i].norm), 0.0f);
+        cosine_falloff = max(dot(temp_wi, hit_info.normal), 0.0f) * max(dot(-temp_wi, light_sources[i].norm), 0.0f);
         
         if(cosine_falloff <= 0.0)
         {
@@ -597,7 +599,16 @@ int sampleLights(HitInfo hit_info, float* light_pdf, float4* w_i, uint* seed)
             continue;
         }
         area = length(light_sources[i].edge_l) * length(light_sources[i].edge_w);
-        weights[i] = length(light_sources[i].emissive_col) * cosine_falloff * area / distance;
+        
+        if(LIGHT_SIZE == 1)
+        {
+            *w_i = temp_wi;
+            *light_pdf = 1/area;
+            *light_pdf *= ( distance / max(dot(-temp_wi, light_sources[i].norm), 0.0f) );
+            return i;
+        }
+        
+        weights[i] = length(light_sources[i].emissive_col) * cosine_falloff * area/ distance;
         sum += weights[i]; 
     }
     
@@ -616,9 +627,13 @@ int sampleLights(HitInfo hit_info, float* light_pdf, float4* w_i, uint* seed)
         
         if(r1 >= cumulative_weight && r1 < (cumulative_weight + weight ) )
         {
-            area = length(light_sources[i].edge_l) * length(light_sources[i].edge_w);
-            *light_pdf = weight/area;
+            area = length(light_sources[i].edge_l) * length(light_sources[i].edge_w);            
             *w_i = w_is[i];
+            *light_pdf = (weight/area);
+            
+            //Convert PDF w.r.t area measure to PDF w.r.t solid angle. MIS needs everything to be in the same domain (either dA or dw)
+            *light_pdf *=  (dot(*w_i, *w_i) / (max(dot(-normalize(*w_i), light_sources[i].norm), 0.0f) ));
+            *w_i = normalize(*w_i);
             return i;
         }
         cumulative_weight += weight;
@@ -861,6 +876,11 @@ float getYluminance(float4 color)
     return 0.212671f*color.x + 0.715160f*color.y + 0.072169f*color.z;
 }
 
+float4 inverseGammaCorrect(float4 color)
+{
+    return pow(color, (float4) 2.2f);
+}
+
 uint wang_hash(uint seed)
 {
     seed = (seed ^ 61) ^ (seed >> 16);
@@ -883,5 +903,3 @@ void powerHeuristic(float* weight, float light_pdf, float brdf_pdf, int beta)
 {
     *weight = (pown(*weight, beta)) / (pown(light_pdf, beta) + pown(brdf_pdf, beta) );  
 }
-
-
