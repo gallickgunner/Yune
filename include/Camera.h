@@ -51,7 +51,7 @@ namespace yune
              *
              * \param[in] y_FOV The vertical field of view in degrees.
              */
-            Camera(float y_FOV);
+            Camera(float y_FOV, float rot_speed = 0.25f, float mov_speed = 0.3f);
             ~Camera();  /**< Default Destructor. */
 
             /** \brief Set the Orientation of the Camera when moved by mouse/keyboard.
