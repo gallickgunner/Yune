@@ -37,7 +37,7 @@ Yes, you are at the right place. You can either compile the whole project yourse
 <br/>
 
  ---
-I haven't tested this on other platforms except Windows but the code was written keeping platform independency in mind. If anybody is willing to check it on other platforms I'd be grateful. I haven't added support for build system like Cmake yet. If anybody still wants to compile it you can fetch NanoGUI and FreeImage libraries and link it up with this project as is in your IDE. And make sure to include these global #defines (option somewhere in your IDE and project's build options (if you use CodeBlocks).
+I haven't tested this on other platforms except Windows but the code was written keeping platform independency in mind. If anybody is willing to check it on other platforms I'd be grateful. I haven't added support for build system like Cmake yet. If anybody still wants to compile it you can fetch NanoGUI from my [forked](https://github.com/gallickgunner/nanogui) repo (I did a small change) and original FreeImage libraries and link it up with this project as is in your IDE. And make sure to include these global #defines (option somewhere in your IDE and project's build options (if you use CodeBlocks).
 
 CL_MINIMUM_OPENCL_VERSION=xxx<br/>
 CL_TARGET_OPENCL_VERSION=xxx<br/>
