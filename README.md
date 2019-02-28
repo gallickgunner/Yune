@@ -20,7 +20,7 @@ Yune uses OpenCL-GL interoperability as the main core for processing images on t
 * [FreeImage](http://freeimage.sourceforge.net) for saving screenshots.
 * [NanoGUI](https://github.com/wjakob/nanogui) for basic widgets.
 
-Note that you don't need many of these dependencies as NanoGUI already has GLFW, GLAD, EIGEN in it. So in actuality all you need is NanoGUI and FreeImage. 
+Note that you don't need many of these dependencies as NanoGUI already has GLFW, GLAD, EIGEN in it. So in actuality all you need is NanoGUI and FreeImage. You need an OpenCL 1.1 or higher compatible CPU/GPU that also supports the CL extension *cl_khr_gl_sharing* (CL-GL interoperability) You don't have to fret over it though as the program will tell you if the device isn't supported. 
 
 ---
 If you are still confused whether this is up for you here are a few points to clear your confusion.
