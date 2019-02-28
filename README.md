@@ -43,13 +43,22 @@ CL_MINIMUM_OPENCL_VERSION=xxx<br/>
 CL_TARGET_OPENCL_VERSION=xxx<br/>
 EIGEN_DONT_ALIGN
 
-
+Currently Implemented features,
+* Next Event Estimation aka Explicit direct light sampling
+* Russian Roulette path termination
+* Modified Phong BRDF (1994 - Lafortune)
+* Multiple Light Source heuristic (chooses a single light source out of multiple ones)
+* Multiple Importance Sampling
+* Support for saving HDR Images
+* Tone mapping and Gamma Correction
 
 Here is a picture obtained by Uni-directional Pathtracing with Next Event Estimation and using Modified Phong BRDF at 4000 spp.  
 
-<img src="https://r0pikq.bn.files.1drv.com/y4mhWXu4VSbDT-gNofzyb9R4P_t8n56ygrisW0bLnhN2owntA6OlCE4H84AYsprxs03moM2zI4s_aIlOLyM--1jH10RPwUBbhMxbmqxqWOl63V1zOi4Le258LztUiBIa0AIRSskmfLFxWJzA6jw8L2zYsQoR2J_6aaDzBqUCRI1dW9bePXgrjliRY3WnbzL6YMcp2jjFFOgwYX3oVnoXglZgQ?cropmode=none"/>
+![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr.jpg)
 
-<img src="https://r0mthq.bn.files.1drv.com/y4mw4XP2D_dsdDyREYi1Y37ScaDS_0utfRuOKBBccQ8THZnHLFWtjL7c20AqXM1dLZDG_WzLadF-tHkTASrFVt-Acb3RqCBb0aLZbptgHQKvU6PQ0re6RekumIWa2ti6Q6jrOSNazChMYmxuTzkygHKucXjzZaRH-GmiPruhnu5SwQ0bNkxtHEsV6FcBmWthpUtxHCDoBFirABlgiFZJPhh4Q?width=1300&height=767&cropmode=none"/>
+![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr2.jpg)
+
+![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr3.jpg)
 
 ### Added a release. Check it out.
 
