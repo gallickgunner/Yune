@@ -1,3 +1,5 @@
+![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr.jpg)
+
 # Yune
 
 Yune is a framework for a Physically based Renderer based on the GPU using OpenCL. It is mainly aimed towards young programmers and researchers who are looking to write their own Ray tracers, Path tracers and implementing other advanced techniques like Physically based Reflection models, etc. It provides the basic funtionality to open up a window, display and save Images that are processed by the GPU. We also provide some basic profiling functionality. *FPS, ms/frame, ms/kernel, total render time and samples per pixel (spp)* are updated in real-time. You can save the image at specific **spp** by providing the value in options. This helps in seeing performance gains if you are working on optimizing the code or comparing different implementations.
@@ -52,9 +54,7 @@ Currently Implemented features,
 * Support for saving HDR Images
 * Tone mapping and Gamma Correction
 
-Here is a picture obtained by Uni-directional Pathtracing with Next Event Estimation and using Modified Phong BRDF at 4000 spp.  
-
-![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr.jpg)
+Below are 2 pictures obtained by Uni-directional Pathtracing with Next Event Estimation and Multiple Importance Sampling using Modified Phong BRDF.   
 
 ![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr2.jpg)
 
