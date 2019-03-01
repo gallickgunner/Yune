@@ -55,10 +55,6 @@ Currently Implemented features,
 * Support for saving HDR Images
 * Tone mapping and Gamma Correction
 
- 
-
-![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr3.jpg)
-
 Watch it in action below, (click for full video)
 
 [![Demo](https://i.imgur.com/jKqjYut.gif)](https://www.youtube.com/watch?v=PrbROGU0ztE)
