@@ -54,11 +54,12 @@ Currently Implemented features,
 * Support for saving HDR Images
 * Tone mapping and Gamma Correction
 
-Below are 2 pictures obtained by Uni-directional Pathtracing with Next Event Estimation and Multiple Importance Sampling using Modified Phong BRDF.   
-
-![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr2.jpg)
+Below is a picture obtained by Uni-directional Pathtracing with Next Event Estimation and Multiple Importance Sampling using Modified Phong BRDF.   
 
 ![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr3.jpg)
+
+Watch it in action below, (click for full video)
+[![Demo](https://i.imgur.com/X7BAVP8.gif)](https://www.youtube.com/watch?v=PrbROGU0ztE)
 
 ### Added a release. Check it out.
 
