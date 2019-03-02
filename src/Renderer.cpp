@@ -198,7 +198,7 @@ namespace yune
 
     void Renderer::start()
     {
-        int itr = 0, frame_count = 0;
+        int frame_count = 0;
         unsigned long samples_taken = 0;
         bool buffer_switch = true;
         double last_time, current_time, start_time = 0, prev_time;
@@ -232,20 +232,13 @@ namespace yune
             if(glfw_manager.gui->start_btn)
             {
                 if(start_time == 0 || reset == 1)
-                    last_time = start_time = glfwGetTime();
+                    start_time = glfwGetTime();
 
                 //Update Render Time
                 if(glfwGetTime() - prev_time >= 1.0f)
                 {
                     prev_time = glfwGetTime();
                     glfw_manager.gui->profiler.render_time->setValue(glfwGetTime() - start_time);
-                }
-
-                //If save button was pressed, save the current image lying in the default framebuffer newest image output by kernel.
-                if(glfw_manager.gui->save_img_btn)
-                {
-                    saveImage(samples_taken, (glfwGetTime() - start_time), glfw_manager.gui->profiler.fps->value(), glfw_manager.gui->hdr_check->checked(), buffer_switch);
-                    glfw_manager.gui->save_img_btn = false;
                 }
 
                 //Enqueue Kernel only if previous kernel completed it's execution
@@ -273,6 +266,9 @@ namespace yune
                                                 );
                     CL_context::checkError(err, __FILE__, __LINE__ -1);
 
+                    err = clEnqueueReleaseGLObjects(cl_manager.comm_queue, 2, cl_manager.image_buffers, 0, NULL, NULL);
+                    CL_context::checkError(err, __FILE__, __LINE__ -1);
+
                     //Issue this kernel to the device. Now after this we can start querying whether the kernel finished or not.
                     clFlush(cl_manager.comm_queue);
                     submit_time = glfwGetTime() * 1000.0;
@@ -291,7 +287,13 @@ namespace yune
 
                     exec_time_rk += (time_finish - time_start)/1000000.0;
 
-                    //Enqueue Post-processing kernel
+                     //Enqueue Post Processing kernel.
+                    if(!cl_manager.target_device.clgl_event_ext)
+                        glFinish();
+
+                    err = clEnqueueAcquireGLObjects(cl_manager.comm_queue, 3, cl_manager.image_buffers, 0, NULL, NULL);
+                    CL_context::checkError(err, __FILE__, __LINE__ -1);
+
                     cl_event ppk_event;
                     updatePostProcessingKernelArgs(reset, buffer_switch);
                     err = clEnqueueNDRangeKernel(cl_manager.comm_queue,     // command queue
@@ -305,7 +307,6 @@ namespace yune
                                                  &ppk_event                 // Event
                                                 );
                     CL_context::checkError(err, __FILE__, __LINE__ -1);
-
 
                     err = clEnqueueReleaseGLObjects(cl_manager.comm_queue, 2, cl_manager.image_buffers, 0, NULL, NULL);
                     CL_context::checkError(err, __FILE__, __LINE__ -1);
@@ -329,6 +330,17 @@ namespace yune
                         buffer_switch = true;
                     }
 
+                    //  If samples taken is equal to the option specified at which to take a screen shot, save the image.
+                    if(samples_taken > 0 && samples_taken == glfw_manager.gui->save_img_samples->value())
+                        saveImage(samples_taken, (glfwGetTime()- start_time), glfw_manager.gui->profiler.fps->value(), glfw_manager.gui->hdr_check->checked(), buffer_switch);
+
+                    //If save button was pressed, save the current image output by the newest kernel execution.
+                    if(glfw_manager.gui->save_img_btn)
+                    {
+                        saveImage(samples_taken, (glfwGetTime() - start_time), glfw_manager.gui->profiler.fps->value(), glfw_manager.gui->hdr_check->checked(), buffer_switch);
+                        glfw_manager.gui->save_img_btn = false;
+                    }
+
                     //Display total samples taken uptill now.
                     if(reset == 1)
                         samples_taken = 1;
@@ -336,10 +348,6 @@ namespace yune
                         samples_taken++;
 
                     glfw_manager.gui->profiler.tot_samples->setValue(samples_taken);
-
-                    //  If samples taken is equal to the option specified at which to take a screen shot, save the image.
-                    if(samples_taken > 0 && samples_taken == glfw_manager.gui->save_img_samples->value())
-                        saveImage(samples_taken, (glfwGetTime()- start_time), glfw_manager.gui->profiler.fps->value(), glfw_manager.gui->hdr_check->checked(), buffer_switch);
 
                     // Measure FPS averaged over 1 second interval.
                     frame_count++;
@@ -359,7 +367,6 @@ namespace yune
                         last_time = current_time;
                         exec_time_rk = exec_time_ppk = 0.0;
                     }
-                    itr++;
                 }
             }
 
@@ -503,10 +510,6 @@ namespace yune
 
         if(hdr_check)
         {
-            if(buffer_switch)
-                glReadBuffer(GL_COLOR_ATTACHMENT0);
-            else
-                glReadBuffer(GL_COLOR_ATTACHMENT1);
             float* img_data = new float[scanline_width*height*3];
             bpp = 96;
             ext =  ".exr";
@@ -532,6 +535,7 @@ namespace yune
             unsigned char* img_data = new unsigned char[scanline_width*height*3];
             bpp = 24;
             ext =  ".jpg";
+
             glReadBuffer(GL_COLOR_ATTACHMENT2);
             glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, img_data);
             bitmap = FreeImage_ConvertFromRawBits(img_data, width, height, scanline_width, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, false);
