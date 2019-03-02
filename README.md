@@ -1,3 +1,6 @@
+>![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr.jpg)
+>*A picture obtained by Uni-directional Pathtracing with Next Event Estimation and Multiple Importance Sampling using Modified Phong BRDF*
+
 # Yune
 
 Yune is a framework for a Physically based Renderer based on the GPU using OpenCL. It is mainly aimed towards young programmers and researchers who are looking to write their own Ray tracers, Path tracers and implementing other advanced techniques like Physically based Reflection models, etc. It provides the basic funtionality to open up a window, display and save Images that are processed by the GPU. We also provide some basic profiling functionality. *FPS, ms/frame, ms/kernel, total render time and samples per pixel (spp)* are updated in real-time. You can save the image at specific **spp** by providing the value in options. This helps in seeing performance gains if you are working on optimizing the code or comparing different implementations.
@@ -20,7 +23,7 @@ Yune uses OpenCL-GL interoperability as the main core for processing images on t
 * [FreeImage](http://freeimage.sourceforge.net) for saving screenshots.
 * [NanoGUI](https://github.com/wjakob/nanogui) for basic widgets.
 
-Note that you don't need many of these dependencies as NanoGUI already has GLFW, GLAD, EIGEN in it. So in actuality all you need is NanoGUI and FreeImage. 
+Note that you don't need many of these dependencies as NanoGUI already has GLFW, GLAD, EIGEN in it. So in actuality all you need is NanoGUI and FreeImage. You need an OpenCL 1.1 or higher compatible CPU/GPU that also supports the CL extension *cl_khr_gl_sharing* (CL-GL interoperability) You don't have to fret over it though as the program will tell you if the device isn't supported. 
 
 ---
 If you are still confused whether this is up for you here are a few points to clear your confusion.
@@ -37,11 +40,7 @@ Yes, you are at the right place. You can either compile the whole project yourse
 <br/>
 
  ---
-I haven't tested this on other platforms except Windows but the code was written keeping platform independency in mind. If anybody is willing to check it on other platforms I'd be grateful. I haven't added support for build system like Cmake yet. If anybody still wants to compile it you can fetch NanoGUI and FreeImage libraries and link it up with this project as is in your IDE. And make sure to include these global #defines (option somewhere in your IDE and project's build options (if you use CodeBlocks).
-
-CL_MINIMUM_OPENCL_VERSION=xxx<br/>
-CL_TARGET_OPENCL_VERSION=xxx<br/>
-EIGEN_DONT_ALIGN
+I haven't tested this on other platforms except Windows but the code was written keeping platform independency in mind. If anybody is willing to check it on other platforms I'd be grateful. I haven't added support for build system like Cmake yet. If anybody still wants to compile, I've written some steps in the [wiki](https://github.com/gallickgunner/Yune/wiki/Getting-Started). Check that out.
 
 Currently Implemented features,
 * Next Event Estimation aka Explicit direct light sampling
@@ -52,13 +51,9 @@ Currently Implemented features,
 * Support for saving HDR Images
 * Tone mapping and Gamma Correction
 
-Here is a picture obtained by Uni-directional Pathtracing with Next Event Estimation and using Modified Phong BRDF at 4000 spp.  
+Watch it in action below, (click for full video)
 
-![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr.jpg)
-
-![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr2.jpg)
-
-![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr3.jpg)
+[![Demo](https://i.imgur.com/jKqjYut.gif)](https://www.youtube.com/watch?v=PrbROGU0ztE)
 
 ### Added a release. Check it out.
 
