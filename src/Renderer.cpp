@@ -308,7 +308,7 @@ namespace yune
                                                 );
                     CL_context::checkError(err, __FILE__, __LINE__ -1);
 
-                    err = clEnqueueReleaseGLObjects(cl_manager.comm_queue, 2, cl_manager.image_buffers, 0, NULL, NULL);
+                    err = clEnqueueReleaseGLObjects(cl_manager.comm_queue, 3, cl_manager.image_buffers, 0, NULL, NULL);
                     CL_context::checkError(err, __FILE__, __LINE__ -1);
 
                     clFinish(cl_manager.comm_queue);
