@@ -2,7 +2,7 @@
 
 ![Yune Results](https://user-images.githubusercontent.com/40864140/75049866-c4597c00-547f-11ea-94d1-5d784a40fcd7.png)
 
-![--732spp-18sec-0fps](https://user-images.githubusercontent.com/40864140/75050511-f5867c00-5480-11ea-96b3-20767873c330.jpg)
+![Bunny](https://user-images.githubusercontent.com/40864140/75080658-78c7c200-54c1-11ea-8ffa-d572f1d18ea4.png)
 
 >*Results obtained from BDPT at 70 SPP*
 
@@ -64,7 +64,11 @@ Watch it in action below, (click for full video)
 
 Yune now supports triangles and is a fully functional BDPT. If you'd like to import any models into the screen you have to first convert them into .rtt format. Make sure the file is .OBJ and has grouping on. Afterwards use the Yune - Parser to convert the desired file into .rtt format which is supported by the renderer. Provide the name of the file in the main and it will load up automatically when you start the renderer. 
 
-A material file is required in order to view imported models. In order to make one follow the template provided on how to make .pbm file. Once you have made the .pbm file you can assign materials in that file to different groups of the model by providing the matID at the start of the group in .rtt file. 
+A material file is required in order to view imported models. In order to make one follow the template provided on how to make .pbm file. Once you have made the .pbm file you can assign materials in that file to different groups of the model by providing the matID at the start of the group in .rtt file.
+
+Use the link below to download the parser.
+
+[ Yune-OBJ-Parser ](https://github.com/jabberw0ky/Yune-OBJ-Parser)
 
 Currently Yune supports unidirectional pathtracer with primitives, unidirectional path tracer with triangles and bidirectional pathtracer with triangles.
 
