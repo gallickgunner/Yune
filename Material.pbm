@@ -1,7 +1,7 @@
 id 1
 ke 0 0 0
 kd 0.9 0.9 0.9
-ks 0 0 0
+ks 0.1 0.1 0.1
 ior 1.5
 alpha_x 10
 alpha_y 10
