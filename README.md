@@ -55,7 +55,13 @@ Watch it in action below, (click for full video)
 
 [![Demo](https://i.imgur.com/jKqjYut.gif)](https://www.youtube.com/watch?v=PrbROGU0ztE)
 
-### Added a release. Check it out.
+### Added support for triangles and converted from UDPT to BDPT. 
+
+Yune now supports triangles and is a fully functional BDPT. If you'd like to import any models into the screen you have to first convert them into .rtt format. Make sure the file is .OBJ and has grouping on. Afterwards use the Yune - Parser to convert the desired file into .rtt format which is supported by the renderer. Provide the name of the file in the main and it will load up automatically when you start the renderer. 
+
+A material file is required in order to view imported models. In order to make one follow the template provided on how to make .pbm file. Once you have made the .pbm file you can assign materials in that file to different groups of the model by providing the matID at the start of the group in .rtt file. 
+
+Currently Yune supports unidirectional pathtracer with primitives, unidirectional path tracer with triangles and bidirectional pathtracer with triangles. 
 
 
 
