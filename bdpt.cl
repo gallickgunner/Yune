@@ -115,56 +115,18 @@ __constant Sphere spheres[2] = {  {  (float4)(2.f, -2.f, -6.f, 1.f),
                                            };
 
 
-__constant Quad light_sources[2] = { {     (float4)(-1.0f, 2.6f, -6.0f, 1.f),
-                                                    (float4)(0.f, -1.f, 0.f, 0.f),      //norm
+__constant Quad light_sources[2] = { {     (float4)(-0.5f, 2.0f, -6.06f, 1.f),
+                                                    (float4)(0.f, 1.f, 0.f, 0.f),      //norm
                                                     (float4)(4.3f, 2.2f, 0.5f, 0.f),    //emissive col
                                                     (float4)(0.f, 0.f, 0.f, 0.f),       //diffuse col
                                                     (float4)(0.f, 0.f, 0.f, 0.f),       //specular col
-                                                    (float4)(2.f, 0.f, 0.f, 0.f),       //edge_l
-                                                    (float4)(0.f, 0.f, 1.0f, 0.f),       //edge_w
+                                                    (float4)(0.96f, 0.f, 0.f, 0.f),       //edge_l
+                                                    (float4)(0.f, 0.f, 0.98f, 0.f),       //edge_w
                                                     0.f                                 //phong exponent
                                                },
 
                                             };
-/*
-__constant Quad walls[WALL_SIZE] = {                                        
-                                       { (float4)(-1.0f, 1.0f, -1.5f, 1.f),      // light right wall
-                                         (float4)(-1.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 1.3f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 1.f, 0.f), 0.f
-                                       },
-                                       
-                                       { (float4)(1.0f, 1.0f, -1.5f, 1.f),      // light left wall
-                                         (float4)(1.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 1.3f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 1.f, 0.f), 0.f
-                                       },
-                                       
-                                       { (float4)(-1.0f, 1.0f, -0.5f, 1.f),      // light front wall
-                                         (float4)(0.f, 0.f, 1.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(2.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 1.3f, 0.f, 0.f), 0.f
-                                       },
-                                       
-                                       { (float4)(-1.0f, 1.0f, -1.5f, 1.f),      // light back wall
-                                         (float4)(0.f, 0.f, -1.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(2.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 1.3f, 0.f, 0.f), 0.f
-                                       },
-                                    };
-*/
+
 __constant float4 SKY_COLOR =(float4) (0.588f, 0.88f, 1.0f, 1.0f);
 __constant float4 BACKGROUND_COLOR =(float4) (0.4f, 0.4f, 0.4f, 1.0f);
 __constant float4 PINK = (float4) (0.988f, 0.0588f, 0.7529f, 1.0f);

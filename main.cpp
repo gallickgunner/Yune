@@ -41,7 +41,7 @@ int main()
         Camera main_cam(90);
         Scene render_scene(main_cam);
 
-        render_scene.loadModel("CornelBox_V2.rtt",scene_data,"Material.pbm",mat_data);
+        render_scene.loadModel("CornelBox_V3.rtt",scene_data,"Material.pbm",mat_data);
         rendr.setup(&render_scene, scene_data, mat_data);
         rendr.start();
     }
