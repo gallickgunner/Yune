@@ -52,7 +52,7 @@ namespace yune
              * \param[in] ext           String representing the extension. Valid extensions are {png, jpg, jpe, jpg, bmp}
              *
              */
-            void setup(Scene* render_scene);
+            void setup(Scene* render_scene , std::vector<Triangle>& scene_data, std::vector<Material>& mat_data);
 
             /** \brief Start the renderer by enqueuing kernel in a loop till the window closes.
              *  The start function currently implements logic for a kernel that takes 2 images. One for reading, other for writing.
@@ -93,8 +93,9 @@ namespace yune
             size_t* rk_lws;                     /**< Local workgroup size for Rendering Kernel. Dynamic allocation because it can be NULL if not provided through options.*/
             size_t* ppk_lws;                   /**< Local workgroup size for Post-processing Kernel. Dynamic allocation because it can be NULL if not provided through options.*/
             Cam cam_data;                       /**< A Cam structure containing Camera data for passing to the GPU. A similar structure resides on GPU.*/
-            std::vector<Triangle> scene_data;   /**< A buffer containing Scene data for passing to the GPU.*/
-            std::vector<Material> mat_data;     /**< A buffer containing material data for passing to the GPU.*/
+            cl_int scene_size;
+            //std::vector<Triangle> scene_data;   /**< A buffer containing Scene data for passing to the GPU.*/
+            //std::vector<Material> mat_data;     /**< A buffer containing material data for passing to the GPU.*/
     };
 }
 #endif // RENDERER_H

@@ -50,7 +50,7 @@ namespace yune
         //dtor
     }
 
-    void Renderer::setup(Scene* render_scene)
+    void Renderer::setup(Scene* render_scene, std::vector<Triangle>& scene_data, std::vector<Material>& mat_data )
     {
         this->render_scene = render_scene;
 
@@ -151,7 +151,7 @@ namespace yune
         if(options[i] != "-")
             render_scene->loadModel(options[i], scene_data,  options[i+1], mat_data);
 
-        /** Since GLFW manager don't have access to camera variable, pass Camera's function as callback.
+        /** Since GLFW manager doesn't have access to camera variable, pass Camera's function as callback.
             This function is called when Camera is updated through mouse/keyboard.
          */
         glfw_manager.setCameraUpdateCallback(std::bind( &(render_scene->main_camera.setOrientation),
@@ -177,6 +177,8 @@ namespace yune
         if(!scene_data.empty())
         {
             cl_int err = 0;
+            scene_size = scene_data.size();
+
             err = clSetKernelArg(cl_manager.rend_kernel, 3, sizeof(cl_mem), &cl_manager.scene_buffer);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
 
@@ -245,6 +247,7 @@ namespace yune
                 if(kernel_status == CL_COMPLETE)
                 {
                     seed = dist(mt_engine);
+
                     updateRenderKernelArgs(gi_check, reset, seed, buffer_switch);
 
                     //Enqueue Kernel.
@@ -468,6 +471,10 @@ namespace yune
 
         // Pass a random seed value.
         err = clSetKernelArg(cl_manager.rend_kernel, 7, sizeof(cl_uint), &seed);
+        CL_context::checkError(err, __FILE__, __LINE__ -1);
+
+        // Pass the size of the triangles in the scene
+        err = clSetKernelArg(cl_manager.rend_kernel, 8, sizeof(cl_int), &scene_size);
         CL_context::checkError(err, __FILE__, __LINE__ -1);
 
     }

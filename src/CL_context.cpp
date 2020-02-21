@@ -267,10 +267,10 @@ namespace yune
 
         if(!scene_data.empty())
         {
-            scene_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, scene_data.size(), scene_data.data(), &err);
+            scene_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(Triangle) * scene_data.size(), scene_data.data(), &err);
             checkError(err, __FILE__, __LINE__);
 
-            mat_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, mat_data.size(), mat_data.data(), &err);
+            mat_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(Material) * mat_data.size(), mat_data.data(), &err);
             checkError(err, __FILE__, __LINE__);
         }
 

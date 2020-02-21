@@ -85,6 +85,7 @@ namespace yune
                 else if(extract == "ke")
                 {
                     ss >> x >> y >> z;
+
                     mat_data.back().emissive = {x,y,z,w};
                 }
                 else if(extract == "kd")
@@ -147,7 +148,7 @@ namespace yune
                     i++;
                     w = 1.f;
                     ss >> x >> y >> z;
-
+                    //std::cout << x << y << z << "\n";
                     if(i == 1)
                         scene_data.back().v1 = {x,y,z,w};
                     else if(i == 2)
@@ -158,8 +159,9 @@ namespace yune
                         i = 0;
                     }
                 }
-                else if (extract == "vn")
+                else if (extract == "n")
                 {
+
                     j++;
                     w = 0.f;
                     ss >> x >> y >> z;

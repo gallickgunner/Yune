@@ -14,7 +14,7 @@
 -
 
 #Rendering Kernel File name
-progressive-PT.cl
+bdpt.cl
 
 #Rendering Kernel Function Name
 pathtracer
@@ -49,5 +49,5 @@ tonemap
 #Model File and Material file name (If not provided, Yune assumes the scene is described inside kernel. If model file provided, material file **must** be provided as well.)
 -
 -
-#./testobj.rtt
+#./CB.rtt
 #./testmat.pbm

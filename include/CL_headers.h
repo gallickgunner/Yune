@@ -74,6 +74,22 @@ struct Triangle
     cl_float pad[3];    // padding 12 bytes - to make it 112 (next multiple of 16)
 } __attribute__((aligned(16)));
 
+struct Test
+{
+    cl_float a;
+    cl_float b;
+    cl_float c;
+    cl_float d;
+    /*cl_float4 v1;
+    cl_float4 v2;
+    cl_float4 v3;
+    cl_float4 vn1;
+    cl_float4 vn2;
+    cl_float4 vn3;
+    cl_int matID;       // total size till here = 100 bytes
+    cl_float pad[3];    // padding 12 bytes - to make it 112 (next multiple of 16)*/
+} __attribute__((aligned(16)));
+
 struct Material
 {
     cl_float4 emissive;

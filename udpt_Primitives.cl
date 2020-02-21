@@ -208,7 +208,7 @@ uint xor_shift(uint seed);
 void powerHeuristic(float* weight, float light_pdf, float brdf_pdf, int beta);
 
 __kernel void pathtracer(__write_only image2d_t outputImage, __read_only image2d_t inputImage, __constant Camera* main_cam, 
-                         __global Triangle* scene_data, __global Material* mat_data, int GI_CHECK, int reset, uint rand)
+                         __global Triangle* scene_data, __global Material* mat_data, int GI_CHECK, int reset, uint rand, int scene_size)
 {
     int img_width = get_image_width(outputImage);
     int img_height = get_image_height(outputImage);

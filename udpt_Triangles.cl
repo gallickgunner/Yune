@@ -1,6 +1,7 @@
 #define PI              3.14159265359f
 #define INV_PI          0.31830988618f
 #define EPSILON         0.0001f
+#define DOT_THRESHOLD = 0.9995;
 #define RR_THRESHOLD    3
 #define WALL_SIZE       6
 #define SPHERE_SIZE     2
@@ -23,22 +24,12 @@ typedef struct Ray{
 
 typedef struct HitInfo{
 
-    int sphere_ID, quad_ID, light_ID;
+    int  triangle_ID, light_ID;
     float4 hit_point;  // point of intersection.
     float4 normal;
+	float4 vert_normal;
 
 } HitInfo;
-
-typedef struct Sphere{
-
-    float4 pos;
-    float4 emissive_col;
-    float4 diffuse_col;
-    float4 specular_col;
-    float radius;
-    float phong_exponent;
-
-} Sphere;
 
 typedef struct Quad{
 
@@ -88,24 +79,9 @@ __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
                            CLK_ADDRESS_CLAMP_TO_EDGE   |
                            CLK_FILTER_NEAREST;
 
-__constant Sphere spheres[2] = {  {  (float4)(2.f, -2.f, -6.f, 1.f),
-                                               (float4)(0.f, 0.f, 0.f, 0.f),
-                                               (float4)(0.811f, 0.501f, 0.3215f, 0.f),
-                                               (float4)(0.1f, 0.1f, 0.1f, 0.f),
-                                                1.5f, 50.0f
-                                            },
-
-                                             { (float4)(-5.f, -3.f, -8.f, 1.f),                                            
-                                               (float4)(0.f, 0.f, 0.f, 0.f),
-                                               (float4)(0.9f, 0.9f, 0.9f, 0),
-                                               (float4)(0.0f, 0.0f, 0.0f, 0),
-                                               1.0f, 10.0f
-                                             }
-                                           };
-
-__constant Quad light_sources[2] = { {     (float4)(-1.0f, 5.f, -6.5f, 1.f),   //pos
+__constant Quad light_sources[2] = { {     (float4)(-1.0f, 2.3f, -1.5f, 1.f), // position
                                                     (float4)(0.f, -1.f, 0.f, 0.f),      //norm
-                                                    (float4)(28.f, 28.f, 28.f, 0.f),    //emissive col
+                                                    (float4)(6.f, 6.f, 6.f, 0.f),    //emissive col
                                                     (float4)(0.f, 0.f, 0.f, 0.f),       //diffuse col
                                                     (float4)(0.f, 0.f, 0.f, 0.f),       //specular col
                                                     (float4)(2.f, 0.f, 0.f, 0.f),       //edge_l
@@ -113,71 +89,8 @@ __constant Quad light_sources[2] = { {     (float4)(-1.0f, 5.f, -6.5f, 1.f),   /
                                                     0.f                                 //phong exponent
                                                },
 
-                                              {     (float4)(-6.0f, 0.5f, -4.0f, 1.f),
-                                                    (float4)(1.f, 0.f, 0.f, 0.f),
-                                                    (float4)(8.f, 8.f, 8.f, 0.f),
-                                                    (float4)(0.f, 0.f, 0.f, 0.f),
-                                                    (float4)(0.f, 0.f, 0.f, 0.f),
-                                                    (float4)(0.f, 2.f, 0.f, 0.f),
-                                                    (float4)(0.f, 0.f, -2.f, 0.f),
-                                                    0.f
-                                              }
+                                              
                                             };
-
-__constant Quad walls[WALL_SIZE] = { {   (float4)(-6.f, -4.f, -9.f, 1.f),     // bottom floor
-                                         (float4)(0.f, 1.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.0f, 0.0f, 0.0f, 0.f),
-                                         (float4)(12.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 10.f, 0.f), 300.f
-                                       },
-
-                                       { (float4)(-6.f, 5.f, -9.f, 1.f),      // top wall
-                                         (float4)(0.f, -1.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(12.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 10.f, 0.f), 60.f
-                                       },
-
-                                       { (float4)(6.f, 5.f, -9.f, 0.f),      //right wall
-                                         (float4)(-1.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.630f, 0.058f, 0.062f, 0.f),
-                                         (float4)(0.0, 0.0f, 0.0f, 0.f),
-                                         (float4)(0.f, -9.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 10.f, 0.f), 100.f
-                                       },
-
-                                       { (float4)(-6.f, 5.f, -9.f, 1.f),     //left wall
-                                         (float4)(1.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.132f, 0.406f, 0.061f, 0.f),
-                                         (float4)(0.0f, 0.0f, 0.0f, 0.f),
-                                         (float4)(0.f, -9.f, 0.f, 0.f),
-                                         (float4)(0.f, 0.f, 10.f, 0.f), 100.f
-                                       },
-
-                                       { (float4)(-6.f, 5.f, -9.f, 0.f),     //back wall
-                                         (float4)(0.f, 0.f, 1.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.150f, 0.15f, 0.15f, 0.f),
-                                         (float4)(0.f, -9.f, 0.f, 0.f),
-                                         (float4)(12.f, 0.f, 0.f, 0.f), 150.f
-                                       },
-
-                                       { (float4)(-6.f, 5.f, 1.f, 0.f),     //front wall
-                                         (float4)(0.f, 0.f, -1.f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.75f, 0.75f, 0.75f, 0.f),
-                                         (float4)(0.f, 0.f, 0.f, 0.f),
-                                         (float4)(0.f, -9.f, 0.f, 0.f),
-                                         (float4)(12.f, 0.f, 0.f, 0.f), 260.f
-                                       }
-                                    };
 
 __constant float4 SKY_COLOR =(float4) (0.588f, 0.88f, 1.0f, 1.0f);
 __constant float4 BACKGROUND_COLOR =(float4) (0.4f, 0.4f, 0.4f, 1.0f);
@@ -185,19 +98,19 @@ __constant float4 PINK = (float4) (0.988f, 0.0588f, 0.7529f, 1.0f);
 
 //Core Functions
 void createRay(float pixel_x, float pixel_y, int img_width, int img_height, Ray* eye_ray, constant Camera* main_cam);
-bool traceRay(Ray* ray, HitInfo* hit_info, int exclude_lightID);
-float4 shading(Ray ray, int GI_CHECK, uint* seed);
-float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed);
-float4 evaluateBRDF(float4 w_i, float4 w_o, HitInfo hit_info);
+bool traceRay(Ray* ray, HitInfo* hit_info, int exclude_lightID, int scene_size, __global Triangle* scene_data);
+float4 shading(int2 pixel, Ray ray, Ray light_ray, int GI_CHECK, uint* seed, int scene_size, __global Triangle* scene_data,  __global Material* mat_data);
+float4 evaluateDirectLighting(int2 pixel, Ray ray, HitInfo hit_info, uint* seed, int scene_size, __global Triangle* scene_data,  __global Material* mat_data);
+float4 evaluateBRDF(float4 w_i, float4 w_o, HitInfo hit_info, __global Triangle* scene_data, __global Material* mat_data );
 int sampleLights(HitInfo hit_info, float* light_pdf, float4* w_i, uint* seed);
 
 //Sampling Hemisphere Functions
-void phongSampleHemisphere (Ray* ray, float* pdf, float4 w_o, HitInfo hit_info, uint* seed);
+void phongSampleHemisphere (Ray* ray, float* pdf, float4 w_o, HitInfo hit_info, uint* seed,  __global Triangle* scene_data, __global Material* mat_data);
 void uniformSampleHemisphere(Ray* ray, float* pdf, HitInfo hit_info, uint* seed);
 void cosineWeightedHemisphere(Ray* ray, float* pdf, HitInfo hit_info, uint* seed);
 
 //PDF functions to return PDF values provided a ray direction
-float calcPhongPDF(float4 w_i, float4 w_o, HitInfo hit_info);
+float calcPhongPDF(float4 w_i, float4 w_o, HitInfo hit_info, __global Triangle* scene_data, __global Material* mat_data);
 float calcCosPDF(float4 w_i, HitInfo hit_info);
 
 // Helper Functions
@@ -208,22 +121,25 @@ uint xor_shift(uint seed);
 void powerHeuristic(float* weight, float light_pdf, float brdf_pdf, int beta);
 
 __kernel void pathtracer(__write_only image2d_t outputImage, __read_only image2d_t inputImage, __constant Camera* main_cam, 
-                         __global Triangle* scene_data, __global Material* mat_data, int GI_CHECK, int reset, uint rand)
+                         __global Triangle* scene_data, __global Material* mat_data, int GI_CHECK, int reset, uint rand, int scene_size)
 {
     int img_width = get_image_width(outputImage);
     int img_height = get_image_height(outputImage);
-    
+    	
     int2 pixel = (int2)(get_global_id(0), get_global_id(1));
-    
+	
     if (pixel.x >= img_width || pixel.y >= img_height)
         return;
         
-    //create a camera ray 
-    Ray eye_ray;
+    //create a camera ray and light ray
+    Ray eye_ray, light_ray;
     float r1, r2;
     uint seed = pixel.y* img_width + pixel.x;
     seed =  rand * seed;
-    
+	
+	//if(pixel.x == 1)
+	//printf("%2.2v4hlf \n", light_sources[0].pos);
+	
     //Since wang_hash(61) returns 0 and Xor Shift cant handle 0.
     if(seed == 61)
         seed =  0;
@@ -234,10 +150,11 @@ __kernel void pathtracer(__write_only image2d_t outputImage, __read_only image2d
     r1 = seed / (float) UINT_MAX;
     seed =  xor_shift(seed);
     r2 =  seed / (float) UINT_MAX;
-    
+ 
     createRay(pixel.x + r1, pixel.y + r2, img_width, img_height, &eye_ray, main_cam);           
-    color = shading(eye_ray, GI_CHECK, &seed);
-    
+	//createLightRay(pixel,&light_ray,&seed);
+    color = shading(pixel, eye_ray, light_ray, GI_CHECK ,&seed, scene_size, scene_data, mat_data);
+   
     if(any(isnan(color)))
             color = PINK;
         
@@ -286,123 +203,142 @@ void createRay(float pixel_x, float pixel_y, int img_width, int img_height, Ray*
                              
 }
 
-bool traceRay(Ray* ray, HitInfo* hit_info, int exclude_lightID)
+
+
+bool traceRay(Ray* ray, HitInfo* hit_info, int exclude_lightID, int scene_size, __global Triangle* scene_data)
 {
      bool flag = false;
-    
-     for(int i = 0; i < SPHERE_SIZE; i++)
-     {
-         float4 normal = ray->origin - spheres[i].pos;
 
-         float a = dot(ray->dir, ray->dir);
-         float b = dot(normal, ray->dir);
-         float c = dot(normal, normal) - spheres[i].radius*spheres[i].radius;
-         float disc = b * b - c;
+	 for (int i =0 ; i < scene_size; i++)
+	 {
+		float4 v1v2 = scene_data[i].v1 - scene_data[i].v2; 
+		float4 v1v3 = scene_data[i].v1 - scene_data[i].v3;
+		
+		float4 N =  scene_data[i].vn1;
+		
+		float Area = length(N)/2 ;
+		
+		float NdotD = dot(N,ray->dir);
 
-         float t = -1.0f;
-         if(disc >= 0.0f)
-            t = -b - sqrt(disc);     
-            
-         if (t >= 0.0 && t < ray->length)
-         {
-            ray->length = t;
-            hit_info->sphere_ID = i;
-            hit_info->hit_point = ray->origin + (ray->dir * ray->length);
-            hit_info->normal = normalize((hit_info->hit_point - spheres[i].pos));
-            flag = true;
-         }
-         
-        if(flag && ray->is_shadow_ray)
-            break;
-     }   
+		if ( fabs(NdotD) > EPSILON )
+		{ 
+			//float dist = dot( N, scene_data[i].v1);
+			float t = ( dot(N, scene_data[i].v1 - ray->origin) ) / dot(N,ray->dir);			
+			if ( t > 0 && t < ray->length  ) 
+			{
+				
+				float4 P = ray->origin + t * ray->dir;
+				
+				float4 Edge1 = scene_data[i].v2 - scene_data[i].v1;
+				float4 Vp1 = P - scene_data[i].v1;
+				float4 PerpToTri = cross(Edge1,Vp1);
+				
+				if ( dot(N,PerpToTri) > 0 )
+				{
+					float4 Edge2 = scene_data[i].v3 - scene_data[i].v2;
+					float4 Vp2 = P - scene_data[i].v2;
+					float4 PerpToTri = cross(Edge2,Vp2);
+					
+                    if( dot(N,PerpToTri) > 0 )
+                    {
+                        float4 Edge3 = scene_data[i].v1 - scene_data[i].v3;
+                        float4 Vp3= P - scene_data[i].v3;
+                        float4 PerpToTri = cross(Edge3,Vp3);
+                        
+                        if( dot(N,PerpToTri) > 0 )
+                        {
+                            //float a = 0.001;
+                            
+                            float4 N1 = normalize(scene_data[i].vn1);
+                            float4 N2 = normalize(scene_data[i].vn2);
+                            float4 N3 = normalize(scene_data[i].vn3);
+                            
+                            float4 N1N2_lerp = N1*t + N2*(t-1);
+                            float4 N1N3_lerp = N1*t + N3*(t-1);
+                            
+                            hit_info->vert_normal = N;
+                            hit_info->hit_point = P;
+                            hit_info->normal = normalize(N1N2_lerp*t + N1N3_lerp*(t-1));
+                            hit_info->triangle_ID = i;
+                            ray->length  = t;
+                            
+                            flag = true;
+                            
+                        }							
+                    }
+				}				
+			}	
+		}
+	 }
     
-    for(int i = 0; i < WALL_SIZE; i++)
+	
+    for(int i = 0; i < LIGHT_SIZE; i++)
     {       
-        float DdotN = dot(ray->dir, walls[i].norm);
+        float DdotN = dot(ray->dir, light_sources[i].norm);
         if(fabs(DdotN) > 0.0001)
         {
-            float t = dot(walls[i].norm, walls[i].pos - ray->origin) / DdotN;
-            if(t>=0.0 && t < ray->length)
+            float t = dot(light_sources[i].norm, light_sources[i].pos - ray->origin) / DdotN;            
+            if(t>0.0 && t < ray->length)
             {
                 float proj1, proj2, la, lb;
                 float4 temp;
+				
+                temp = ray->origin + (ray->dir * t);
+                temp = temp - light_sources[i].pos;
+				proj1 = dot(temp, light_sources[i].edge_l);
+				proj2 = dot(temp, light_sources[i].edge_w);             
+				la = length(light_sources[i].edge_l);
+				lb = length(light_sources[i].edge_w);
+				
+                 // Projection of the vector from rectangle corner to hitpoint on the edges.
+				proj1 /= la;    
+				proj2 /= lb;
+				
+				if( (proj1 >= 0.0 && proj2 >= 0.0)  && (proj1 <= la && proj2 <= lb)  )
+				{
+                    hit_info->hit_point = ray->origin + (ray->dir * t);
+					hit_info->light_ID = i;
+                    hit_info->triangle_ID = -1;
+					if(i != exclude_lightID)
+						flag = true;
+					else
+						flag = false;
+				}        
                 
-                hit_info->hit_point = ray->origin + (ray->dir * t);
-                temp = hit_info->hit_point - walls[i].pos;
-                proj1 = dot(temp, walls[i].edge_l);
-                proj2 = dot(temp, walls[i].edge_w);             
-                la = length(walls[i].edge_l);
-                lb = length(walls[i].edge_w);
-                
-                // Projection of the vector from rectangle corner to hitpoint on the edges.
-                proj1 /= la;    
-                proj2 /= lb;
-                
-                if( (proj1 >= 0.0 && proj2 >= 0.0)  && (proj1 <= la && proj2 <= lb)  )
-                {
-                    hit_info->sphere_ID = -1;
-                    hit_info->light_ID = -1;
-                    hit_info->quad_ID = i;
-                    hit_info->normal = walls[i].norm;
-                    ray->length = t;
-                    if(!ray->is_shadow_ray)
-                        flag = true;                    
-                }
-                
-                //Check intersection with light sources.
-                if(i == 1)// || i == 3)
-                {
-                    int j = 0;
-                    
-                    if( i == 1)
-                        j = 0;
-                    else
-                        j = 1;
-                        
-                    temp = hit_info->hit_point - light_sources[j].pos;
-                    proj1 = dot(temp, light_sources[j].edge_l);
-                    proj2 = dot(temp, light_sources[j].edge_w);             
-                    la = length(light_sources[j].edge_l);
-                    lb = length(light_sources[j].edge_w);
-                    
-                    // Projection of the vector from rectangle corner to hitpoint on the edges.
-                    proj1 /= la;    
-                    proj2 /= lb;
-                    
-                    if( (proj1 >= 0.0 && proj2 >= 0.0)  && (proj1 <= la && proj2 <= lb)  )
-                    {
-                        hit_info->quad_ID = -1;
-                        hit_info->light_ID = j;
-                        if(j != exclude_lightID)
-                            flag = true;                    
-                    }
-                }                
-                if(flag && ray->is_shadow_ray)
-                    break;
             }
         }       
     }
+
     return flag;
+	
 }
 
 
-float4 shading(Ray ray, int GI_CHECK, uint* seed)
+float4 shading(int2 pixel, Ray ray, Ray light_ray, int GI_CHECK, uint* seed, int scene_size, __global Triangle* scene_data, __global Material* mat_data)
 {   
-    HitInfo hit_info = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
-    if(!traceRay(&ray, &hit_info, -1))
+    HitInfo hit_info = {-1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
+	HitInfo hit_light = {-1, 0, (float4)(0,0,0,1), light_sources[0].norm};
+
+    if(!traceRay(&ray, &hit_info, -1, scene_size, scene_data))
         return BACKGROUND_COLOR;
     
     if(hit_info.light_ID >= 0)
-        return light_sources[hit_info.light_ID].emissive_col;
+    {
+        if(dot(ray.dir, light_sources[hit_info.light_ID].norm) < 0)
+            return (float4)(1,1,1,1);
+        else
+            return (float4)(0.5,.5,.5,1);
+    }
                     
-    
+    //if(hit_info.quad_ID == -1 && hit_info.sphere_ID == -1)
+		//return (float4) (1.0,0.0,.0,1.0);
     float4 direct_color, indirect_color, throughput;    
     throughput = (float4) (1.f, 1.f, 1.f, 1.f);
     direct_color = (float4) (0.f, 0.f, 0.f, 0.f);   
     indirect_color = direct_color;
     
     // Compute Direct Illumination at the first hitpoint.
-    direct_color =  evaluateDirectLighting(ray, hit_info, seed);
+    direct_color =  evaluateDirectLighting(pixel, ray, hit_info, seed, scene_size, scene_data, mat_data);
     
     //Compute Indirect Illumination by storing all the seondary rays first.
     if(GI_CHECK)
@@ -412,36 +348,36 @@ float4 shading(Ray ray, int GI_CHECK, uint* seed)
         for(int i = 0; i < 100000; i++)
         //while(true)
         {
-            HitInfo new_hitinfo = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
+            HitInfo new_hitinfo = {-1, -1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
             Ray new_ray;
             float pdf = 1, cosine_falloff, spec_prob = 0.0f, r;
             
             *seed = xor_shift(*seed);
             r = *seed / (float) UINT_MAX;   
             
-            if(hit_info.sphere_ID >= 0)
-                spec_prob = length(spheres[hit_info.sphere_ID].specular_col);            
-            else if (hit_info.quad_ID >= 0)
-                spec_prob = length(walls[hit_info.quad_ID].specular_col);
+            
+			float4 spec_color = mat_data[scene_data[hit_info.triangle_ID].matID].spec;            
+			spec_prob =  fmax(spec_color.x, fmax(spec_color.y, spec_color.z));
             
             if(r <= spec_prob)
-                phongSampleHemisphere(&new_ray, &pdf, -ray.dir, hit_info, seed);             
+               phongSampleHemisphere(&new_ray, &pdf, -ray.dir, hit_info, seed, scene_data, mat_data);             
             else
                 cosineWeightedHemisphere(&new_ray, &pdf, hit_info, seed);            
             
             // If GI_ray hits nothing or pdf is zero or if ray hits light source return.
             // Note that in normal path tracing we would have skipped an iteration upon hitting a light source. But in Progressive path tracing
             // we return i.e. we ignore the sample completely since we are taking samples continuously.
-            if(!traceRay(&new_ray, &new_hitinfo, -1) || pdf == 0.0f || new_hitinfo.light_ID >= 0)
+            if(!traceRay(&new_ray, &new_hitinfo, -1, scene_size, scene_data) || pdf == 0.0f || new_hitinfo.light_ID >= 0)
                 break;
                 
             //If it hits object, accumulate the brdf  and geometry terms.
-            throughput = throughput * evaluateBRDF(new_ray.dir, -ray.dir, hit_info) * max(dot(new_ray.dir, hit_info.normal), 0.0f) / pdf; 
+            throughput = throughput * evaluateBRDF(new_ray.dir, -ray.dir, hit_info, scene_data, mat_data) * max(dot(new_ray.dir, hit_info.normal), 0.0f) / pdf; 
         
             /* Russian Roulette: Use RR after few bounces. Terminate paths with low enough value of throughput. We use Y luminance as the value
              * that the path survives. The termination probability is (1 - Yluminance). If the path survives boost the energy by
              * (1/p)
              */
+             
             if(x > RR_THRESHOLD)
             {       
                 float p = min(getYluminance(throughput), 0.95f);
@@ -453,7 +389,7 @@ float4 shading(Ray ray, int GI_CHECK, uint* seed)
                 throughput *= 1/p;
             }
             
-            indirect_color +=  throughput * evaluateDirectLighting(new_ray, new_hitinfo, seed);
+            indirect_color +=  throughput * evaluateDirectLighting(pixel, new_ray, new_hitinfo, seed, scene_size, scene_data, mat_data);
             hit_info = new_hitinfo;
             ray = new_ray;
             x++;
@@ -462,8 +398,28 @@ float4 shading(Ray ray, int GI_CHECK, uint* seed)
     return direct_color + indirect_color;
 }
 
-float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
-{   
+float4 evaluateDirectLighting(int2 pixel , Ray ray, HitInfo hit_info, uint* seed, int scene_size, __global Triangle* scene_data,  __global Material* mat_data)
+{
+	float4 direct_color = (float4) (0.f, 0.f, 0.f, 0.f);
+	float4 w_i;
+	float light_pdf;
+	//Direct Light Sampling
+	int j = sampleLights(hit_info, &light_pdf, &w_i, seed);
+	if(j == -1 || light_pdf == 0)
+		return direct_color;
+	
+	Ray shadow_ray = {hit_info.hit_point + w_i * EPSILON, w_i, INFINITY, true};
+	HitInfo shadow_hitinfo = {-1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
+	
+	//If ray doesn't hit anything (exclude light source j while intersection check). This means light source j visible.
+    if(!traceRay(&shadow_ray, &shadow_hitinfo, 0, scene_size, scene_data) )
+    {
+		direct_color = evaluateBRDF(w_i, -ray.dir, hit_info, scene_data, mat_data) * light_sources[j].emissive_col * max(dot(w_i, hit_info.normal), 0.0f);
+		direct_color *= 1/light_pdf;
+	}
+	
+	return direct_color;
+	/*
     float4 brdf_sample = (float4) (0.f, 0.f, 0.f, 0.f);
     float4 light_sample = (float4) (0.f, 0.f, 0.f, 0.f);
     float4 emission;
@@ -472,10 +428,8 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
     
     //We use MIS with Power Heuristic. The exponent can be set to 1 for balance heuristic.
     //Emission 
-    if(hit_info.quad_ID >= 0)
-        emission = walls[hit_info.quad_ID].emissive_col;
-    else
-        emission = spheres[hit_info.sphere_ID].emissive_col;
+    if(hit_info.triangle_ID >= 0)
+		emission = mat_data[scene_data[hit_info.triangle_ID].matID].emissive;
     
     //Direct Light Sampling
     int j = sampleLights(hit_info, &light_pdf, &w_i, seed);
@@ -483,29 +437,27 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
         return light_sample + emission;
     
     Ray shadow_ray = {hit_info.hit_point + w_i * EPSILON, w_i, INFINITY, true};
-    HitInfo shadow_hitinfo = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
+    HitInfo shadow_hitinfo = {-1, -1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};
     
     //If ray doesn't hit anything (exclude light source j while intersection check). This means light source j visible.
-    if(!traceRay(&shadow_ray, &shadow_hitinfo, j) )
+    if(!traceRay(&shadow_ray, &shadow_hitinfo, j, scene_size, scene_data) )
     {
         *seed = xor_shift(*seed);
         r = *seed / (float) UINT_MAX;   
-        
+		
         //Use probability to pick either diffuse or glossy pdf        
-        if(hit_info.sphere_ID >= 0)
-            spec_prob = length(spheres[hit_info.sphere_ID].specular_col);        
-        else if (hit_info.quad_ID >= 0)
-            spec_prob = length(walls[hit_info.quad_ID].specular_col);
+		if (hit_info.triangle_ID >= 0)
+			spec_prob = length(mat_data[scene_data[hit_info.triangle_ID].matID].spec);
         
         if(r <= spec_prob)
-            brdf_pdf = calcPhongPDF(w_i, -ray.dir, hit_info);
+            brdf_pdf = calcPhongPDF(w_i, -ray.dir, hit_info, scene_data, mat_data);
         else
             brdf_pdf = calcCosPDF(w_i, hit_info);
 
         mis_weight =  light_pdf;        
         powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 1);
         
-        light_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * max(dot(w_i, hit_info.normal), 0.0f);
+        light_sample =  evaluateBRDF(w_i, -ray.dir, hit_info, scene_data, mat_data) * light_sources[j].emissive_col * max(dot(w_i, hit_info.normal), 0.0f);
         light_sample *=  mis_weight/light_pdf;
         
         //Commented lines for comparing with/without MIS
@@ -519,7 +471,7 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
     Ray brdf_sample_ray;
     
     if(r <= spec_prob)
-        phongSampleHemisphere(&brdf_sample_ray, &brdf_pdf, -ray.dir, hit_info, seed);
+        phongSampleHemisphere(&brdf_sample_ray, &brdf_pdf, -ray.dir, hit_info, seed, scene_data, mat_data);
     else
         cosineWeightedHemisphere(&brdf_sample_ray, &brdf_pdf, hit_info, seed);
     
@@ -527,48 +479,39 @@ float4 evaluateDirectLighting(Ray ray, HitInfo hit_info, uint* seed)
         return light_sample;                
     
     w_i = brdf_sample_ray.dir;  
-    HitInfo new_hitinfo = {-1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};   
+    HitInfo new_hitinfo = {-1, -1, -1, -1, (float4)(0,0,0,1), (float4)(0,0,0,0)};   
     
     //If traceRay doesnt hit anything or if it does not hit the same light source return only light sample.
-    if(!traceRay(&brdf_sample_ray, &new_hitinfo, -1))
+    if(!traceRay(&brdf_sample_ray, &new_hitinfo, -1, scene_size, scene_data))
        return light_sample;
     else if(new_hitinfo.light_ID != j)
         return light_sample;
 
     mis_weight = brdf_pdf;
     powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 1);
-    brdf_sample =  evaluateBRDF(w_i, -ray.dir, hit_info) * light_sources[j].emissive_col * max(dot(w_i, hit_info.normal), 0.0f);
+    brdf_sample =  evaluateBRDF(w_i, -ray.dir, hit_info, scene_data, mat_data) * light_sources[j].emissive_col * max(dot(w_i, hit_info.normal), 0.0f);
     brdf_sample *=  mis_weight / brdf_pdf;
     
-    return (light_sample + brdf_sample);
+    return (light_sample + brdf_sample);*/
 }
 
-float4 evaluateBRDF(float4 w_i, float4 w_o, HitInfo hit_info)
+float4 evaluateBRDF(float4 w_i, float4 w_o, HitInfo hit_info, __global Triangle* scene_data, __global Material* mat_data)
 {
     float4 emissive, diffuse, specular, refl_vec;
     float mirror_config;
     
     refl_vec = (2*dot(w_i, hit_info.normal)) *hit_info.normal - w_i;
     refl_vec = normalize(refl_vec);
-    
-    if(hit_info.quad_ID >= 0)
-    {
-        mirror_config = pow(max(dot(w_o, refl_vec), 0.0f), walls[hit_info.quad_ID].phong_exponent);       
-        //diffuse = inverseGammaCorrect(walls[hit_info.quad_ID].diffuse_col) * INV_PI;
-        emissive = walls[hit_info.quad_ID].emissive_col;
-        diffuse = walls[hit_info.quad_ID].diffuse_col * INV_PI;
-        specular = walls[hit_info.quad_ID].specular_col * mirror_config * (walls[hit_info.quad_ID].phong_exponent+2) * INV_PI * 0.5f;
-    }
-    else
-    {       
-        mirror_config = pow(max(dot(w_o, refl_vec), 0.0f), spheres[hit_info.sphere_ID].phong_exponent);        
-        //diffuse = inverseGammaCorrect(spheres[hit_info.sphere_ID].diffuse_col) * INV_PI;
-        emissive = spheres[hit_info.sphere_ID].emissive_col;
-        diffuse = spheres[hit_info.sphere_ID].diffuse_col * INV_PI;
-        specular = spheres[hit_info.sphere_ID].specular_col * mirror_config * (spheres[hit_info.sphere_ID].phong_exponent+2) * INV_PI * 0.5f;
-    }
+	
+	if(hit_info.triangle_ID >= 0)
+	{
+		mirror_config = pow(max(dot(w_o, refl_vec), 0.0f), mat_data[scene_data[hit_info.triangle_ID].matID].alpha_x + mat_data[scene_data[hit_info.triangle_ID].matID].alpha_y);       
+        emissive = mat_data[scene_data[hit_info.triangle_ID].matID].emissive;
+        diffuse = mat_data[scene_data[hit_info.triangle_ID].matID].diff * INV_PI;
+        specular = mat_data[scene_data[hit_info.triangle_ID].matID].spec * mirror_config * ((mat_data[scene_data[hit_info.triangle_ID].matID].alpha_x+mat_data[scene_data[hit_info.triangle_ID].matID].alpha_y)+2) * INV_PI * 0.5f;
+	}
+	
     return (emissive + diffuse + specular);
-    
 }
 
 int sampleLights(HitInfo hit_info, float* light_pdf, float4* w_i, uint* seed)
@@ -604,7 +547,7 @@ int sampleLights(HitInfo hit_info, float* light_pdf, float4* w_i, uint* seed)
         {
             *w_i = temp_wi;
             *light_pdf = 1/area;
-            *light_pdf *= ( distance / max(dot(-temp_wi, light_sources[i].norm), 0.0f) );
+            *light_pdf *= distance / max(dot(-temp_wi, light_sources[i].norm), 0.0f);
             return i;
         }
         
@@ -640,7 +583,7 @@ int sampleLights(HitInfo hit_info, float* light_pdf, float4* w_i, uint* seed)
     }
 }
 
-void phongSampleHemisphere (Ray* ray, float* pdf, float4 w_o, HitInfo hit_info, uint* seed)
+void phongSampleHemisphere (Ray* ray, float* pdf, float4 w_o, HitInfo hit_info, uint* seed, __global Triangle* scene_data, __global Material* mat_data)
 {
     /* Create a new coordinate system for Normal Space where Z aligns with Reflection Direction. */
     Mat4x4 normal_to_world;
@@ -682,10 +625,9 @@ void phongSampleHemisphere (Ray* ray, float* pdf, float4 w_o, HitInfo hit_info, 
     (alpha, phi) = (acos(r1^(1/(n+1))), 2pi*r2)
     */
     int phong_exponent;
-    if(hit_info.sphere_ID > 0)
-        phong_exponent = spheres[hit_info.sphere_ID].phong_exponent;
-    else
-        phong_exponent = walls[hit_info.quad_ID].phong_exponent;
+	
+	if (hit_info.triangle_ID > 0)
+		phong_exponent = mat_data[scene_data[hit_info.triangle_ID].matID].alpha_x + mat_data[scene_data[hit_info.triangle_ID].matID].alpha_y;
 
     float phi = 2*PI * r2;
     float costheta = pow(r1, 1.0f/(phong_exponent+1));
@@ -848,7 +790,7 @@ void cosineWeightedHemisphere(Ray* ray, float* pdf, HitInfo hit_info, uint* seed
     *pdf = z * INV_PI;
 }
 
-float calcPhongPDF(float4 w_i, float4 w_o, HitInfo hit_info)
+float calcPhongPDF(float4 w_i, float4 w_o, HitInfo hit_info, __global Triangle* scene_data, __global Material* mat_data)
 {
     float4 refl_dir;
     refl_dir = 2*(dot(w_o, hit_info.normal)) * hit_info.normal - w_o;
@@ -857,12 +799,8 @@ float calcPhongPDF(float4 w_i, float4 w_o, HitInfo hit_info)
     float costheta = cos(dot(refl_dir, w_i));
     float phong_exponent;
     
-    if(hit_info.sphere_ID > 0)
-        phong_exponent = spheres[hit_info.sphere_ID].phong_exponent;
-    else
-        phong_exponent = walls[hit_info.quad_ID].phong_exponent;
-    return (phong_exponent+1) * 0.5 * INV_PI * pow(costheta, phong_exponent);
-    
+    if(hit_info.triangle_ID > 0)
+		phong_exponent = mat_data[scene_data[hit_info.triangle_ID].matID].alpha_x + mat_data[scene_data[hit_info.triangle_ID].matID].alpha_y;
     
 }
 
