@@ -1,4 +1,4 @@
->![img1] [url=https://ibb.co/wYSb7Km][img]https://i.ibb.co/wYSb7Km/Yune-Results2.png[/img][/url] ![img1]
+>![img1] https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr.jpg ![img1]
 >*A picture obtained by Uni-directional Pathtracing with Next Event Estimation and Multiple Importance Sampling using Modified Phong BRDF*
 
 # Yune
