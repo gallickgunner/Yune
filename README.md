@@ -1,5 +1,10 @@
->![img1](https://raw.githubusercontent.com/gallickgunner/Yune/Pictures/hdr.jpg)
->*A picture obtained by Uni-directional Pathtracing with Next Event Estimation and Multiple Importance Sampling using Modified Phong BRDF*
+![Yune Results2](https://user-images.githubusercontent.com/40864140/75049511-2cf42900-547f-11ea-81d9-c0c548967cbc.png)
+
+![Yune Results](https://user-images.githubusercontent.com/40864140/75049866-c4597c00-547f-11ea-94d1-5d784a40fcd7.png)
+
+![--732spp-18sec-0fps](https://user-images.githubusercontent.com/40864140/75050511-f5867c00-5480-11ea-96b3-20767873c330.jpg)
+
+>*Results obtained from BDPT at 70 SPP*
 
 # Yune
 
@@ -7,7 +12,7 @@ Yune is a framework for a Physically based Renderer based on the GPU using OpenC
 
 If you are familiar with [Nori](https://github.com/wjakob/nori), this gets easier. Yune is more like Nori on the GPU. As described earlier the host portion provides all the basic functionalities to open up a window, display the image and setup minimal buffers that would be required by a normal Pathtracer or Raytracer. What happens to the Image next depends on the Kernel which is upto the programmer that is **you**.
 
-That being said as this is part of my and [@jabberwoky](https://github.com/jabberw0ky)'s bachelor thesis on Physically Based Rendering, we will be upgrading the GPU portion as well and keep adding new techniques as we study.
+That being said as this is part of our bachelor thesis on Physically Based Rendering, we will be upgrading the GPU portion as well and keep adding new techniques as we study.
 
 You can use this software in two ways.
 
@@ -61,7 +66,9 @@ Yune now supports triangles and is a fully functional BDPT. If you'd like to imp
 
 A material file is required in order to view imported models. In order to make one follow the template provided on how to make .pbm file. Once you have made the .pbm file you can assign materials in that file to different groups of the model by providing the matID at the start of the group in .rtt file. 
 
-Currently Yune supports unidirectional pathtracer with primitives, unidirectional path tracer with triangles and bidirectional pathtracer with triangles. 
+Currently Yune supports unidirectional pathtracer with primitives, unidirectional path tracer with triangles and bidirectional pathtracer with triangles.
+
+More Updates coming soon :) 
 
 
 
