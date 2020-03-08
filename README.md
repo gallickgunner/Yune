@@ -39,6 +39,9 @@ Currently Implemented features,
 * Support for saving HDR Images
 * Tone mapping and Gamma Correction
 * Naive Bidirectional Pathtracing as in Lafortune's paper
+* SAH-based BVH
+
+#### Check the [RESOURCES.MD](https://github.com/gallickgunner/Yune/blob/master/RESOURCES.md) file for a list of reference material (research papers and books) used.
 
 Watch it in action below, (click for full video)
 
