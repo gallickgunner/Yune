@@ -24,6 +24,7 @@
 #ifndef CLMANAGER_H
 #define CLMANAGER_H
 
+#include <BVH.h>
 #include <CL_headers.h>
 #include <glad/glad.h>
 #include <string>
@@ -57,12 +58,13 @@ namespace yune
 
             /** \brief Setup an OpenCL context and Buffer Object.
              *
-             * \param[in] rbo_IDs       The RenderBuffer Object array on top of which the Read and Write Only OpenCL Image Objects are created.
-             * \param[in] scene_data    A std::vector containing the data for the Scene to be pass on to the Buffer Object.
-             * \param[in] bsdf_data     A std::vector containing the data for the Material to be pass on to the Buffer Object.
-             * \param[in] cam_data      A pointer to Cam structure ontaining the data for the Camera to be pass on to the Buffer Object. A similar structure is present on GPU.
+             * \param[in] rbo_IDs      The RenderBuffer Object array on top of which the Read and Write Only OpenCL Image Objects are created.
+             * \param[in] scene_data   A std::vector containing the data for the Scene to be pass on to the Buffer Object.
+             * \param[in] mat_data     A std::vector containing the data for the Material to be pass on to the Buffer Object.
+             * \param[in] bvh_data     A std::vector containing the data for the BVH.
+             * \param[in] cam_data     A pointer to Cam structure ontaining the data for the Camera to be pass on to the Buffer Object. A similar structure is present on GPU.
              */
-            void setupBuffers(GLuint* rbo_IDs, std::vector<Triangle>& scene_data, std::vector<Material>& bsdf_data, Cam* cam_data);
+            void setupBuffers(GLuint* rbo_IDs, std::vector<TriangleGPU>& vert_data, std::vector<Material>& mat_data, std::vector<BVHNodeGPU>& bvh_data, Cam* cam_data);
 
             /** \brief Display the Error message for the error code.
              *
@@ -138,8 +140,10 @@ namespace yune
             cl_kernel rend_kernel;                  /**< The main path-tracer kernel.*/
             cl_kernel pp_kernel;                    /**< The kernel for post processing effects like Tone mapping and Gamma Correction.*/
             cl_mem image_buffers[3];                /**< Image Buffer Objects. There are 2 for swapping role between read and write-only images. Third is for postprocessing */
-            cl_mem scene_buffer;                    /**< The Buffer Object used to hold Scene model data. */
+            cl_mem vert_buffer;                    /**< The Buffer Object used to hold Scene model data. */
             cl_mem mat_buffer;                      /**< The Buffer Object used to hold material data. */
+            cl_mem bvh_buffer;                      /**< The Buffer Object used to hold bvh data. */
+            cl_mem binary_heap_buffer;              /**< The Buffer Object used to hold binary heap which is used to traverse bvh. */
             cl_mem camera_buffer;                   /**< The Buffer Object used to hold Camera data. */
 
             size_t rendk_wgs;                       /**< The maximum nubmer of Work Items in a Workgroup the rendering kernel can afford due to memory limitations. */

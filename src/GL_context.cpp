@@ -217,6 +217,12 @@ namespace yune
         if(key == GLFW_KEY_RIGHT &&  (action == GLFW_PRESS || action == GLFW_REPEAT) )
             cameraUpdateCallback(Vec4f(1,0,0,0), 0, 0);
 
+        if(key == GLFW_KEY_HOME &&  (action == GLFW_PRESS || action == GLFW_REPEAT) )
+          GL_context::cameraUpdateCallback(Vec4f(0,1,0,0), 0, 0);
+
+        if(key == GLFW_KEY_END &&  (action == GLFW_PRESS || action == GLFW_REPEAT) )
+          cameraUpdateCallback(Vec4f(0,-1, 0,0), 0, 0);
+
         if(key == GLFW_KEY_SPACE &&  action == GLFW_PRESS )
             ptr->space_flag = true;
         if(key == GLFW_KEY_SPACE &&  action == GLFW_RELEASE )

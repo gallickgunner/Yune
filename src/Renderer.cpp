@@ -34,12 +34,16 @@
 #include <string>
 #include <random>
 #include <chrono>
+#include <stdint.h>
 #include <limits>
 
 namespace yune
 {
     Renderer::Renderer()
     {
+        yune_options.compiler_opts = "";
+        yune_options.rtt_fn = "";
+        yune_options.pbm_fn = "";
         //ctor
     }
 
@@ -47,14 +51,13 @@ namespace yune
     {
         delete[] rk_lws;
         delete[] ppk_lws;
+        delete render_scene;
         //dtor
     }
 
-    void Renderer::setup(Scene* render_scene, std::vector<Triangle>& scene_data, std::vector<Material>& mat_data )
+    void Renderer::loadOptions()
     {
-        this->render_scene = render_scene;
-
-        /* Read renderer options from a file. This allows us our application to be independent of compile time. Simply stating,
+         /* Read renderer options from a file. This allows us our application to be independent of compile time. Simply stating,
          * we wouldn't have to re-compile if you change image width/height or kernel file. Very useful when debugging and trying
          * multiple kernel variations.
          */
@@ -77,25 +80,23 @@ namespace yune
         }
 
         if(options.empty())
-            throw RuntimeError("Please create a file named <renderer-options.yun> and provide all the options.");
+            throw RuntimeError("Please create a file named <yune-options.yun> and provide all the options");
 
         int i = 0;
+
         //Start Processing options.
+        yune_options.width = std::stoi(options[i++]);
+        yune_options.height = std::stoi(options[i++]);
+        yune_options.is_fullscreen = std::stoi(options[i++]);
 
-        //First 3 options are width, height and fullscreen
-        glfw_manager.createWindow(std::stoi(options[i]), std::stoi(options[i+1]), std::stoi(options[i+2]));
-        cl_manager.setup();
-        i += 3;
+        if(options[i++] != "-")
+            yune_options.compiler_opts = options[i-1];
+        yune_options.rk_fn = options[i++];
+        yune_options.rk_func_name = options[i++];
+        yune_options.ppk_fn = options[i++];
+        yune_options.ppk_func_name = options[i++];
 
-        //Next option specifies if compiler options are provided or not, followed by kernel file names and function names.
-        if(options[i] != "-")
-            cl_manager.createProgram(options[i], options[i+1], options[i+2], options[i+3], options[i+4]);
-        else
-            cl_manager.createProgram("", options[i+1], options[i+2], options[i+3], options[i+4]);
-
-        i += 5;
-
-        //Next options tells if GWS for Rendering Kernel is provided.
+       //Next options tells if GWS for Rendering Kernel is provided.
         if(options[i] != "-")
         {
             rk_gws[0] = std::stoi(options[i++]);
@@ -103,9 +104,9 @@ namespace yune
         }
         else
         {
-            rk_gws[0] = glfw_manager.framebuffer_width;
-            rk_gws[1] = glfw_manager.framebuffer_height;
-            i+=2;;
+            rk_gws[0] = -1;
+            rk_gws[1] = -1;
+            i+=2;
         }
 
         //Next option tells if LWS for Rendering Kernel is provided
@@ -129,9 +130,9 @@ namespace yune
         }
         else
         {
-            ppk_gws[0] = glfw_manager.framebuffer_width;
-            ppk_gws[1] = glfw_manager.framebuffer_height;
-            i+=2;;
+            ppk_gws[0] = -1;
+            ppk_gws[1] = -1;
+            i+=2;
         }
 
         //Next options tells if LWS for Post-processing Kernel is provided.
@@ -149,9 +150,28 @@ namespace yune
 
         //Next Option tells if there is a model file to load
         if(options[i] != "-")
-            render_scene->loadModel(options[i], scene_data,  options[i+1], mat_data);
+        {
+            yune_options.rtt_fn = options[i++];
+            yune_options.pbm_fn = options[i++];
+        }
+        else
+            i+=2;
 
-        /** Since GLFW manager doesn't have access to camera variable, pass Camera's function as callback.
+        //Next options tells BVH Bins size
+        yune_options.bvh_bins = std::stoi(options[i++]);
+
+    }
+
+    void Renderer::setup()
+    {
+        //Load Options from file
+        loadOptions();
+
+        render_scene = new Scene(Camera(90), BVH(yune_options.bvh_bins));
+        glfw_manager.createWindow(yune_options.width, yune_options.height, yune_options.is_fullscreen);
+        glfw_manager.setupGlBuffer();
+
+        /** Since GLFW manager don't have access to camera variable, pass Camera's function as callback.
             This function is called when Camera is updated through mouse/keyboard.
          */
         glfw_manager.setCameraUpdateCallback(std::bind( &(render_scene->main_camera.setOrientation),
@@ -161,45 +181,92 @@ namespace yune
                                                     std::placeholders::_3)
                                          );
 
+
+        //If GWS is not provided in options file, set GWS equal to framebuffer width/height.
+        if(rk_gws[0] == -1)
+        {
+            rk_gws[0] = glfw_manager.framebuffer_width/2.0f;
+            rk_gws[1] = glfw_manager.framebuffer_height/2.0f;
+        }
+
+        if(ppk_gws[0] == -1)
+        {
+            ppk_gws[0] = glfw_manager.framebuffer_width;
+            ppk_gws[1] = glfw_manager.framebuffer_height;
+        }
+
+        cl_manager.setup();
+        cl_manager.createProgram(yune_options.compiler_opts, yune_options.rk_fn, yune_options.rk_func_name, yune_options.ppk_fn, yune_options.ppk_func_name);
+
+        if(yune_options.rtt_fn != "")
+            render_scene->loadModel(yune_options.rtt_fn, yune_options.pbm_fn);
+
+
         /* Setup Buffer data to pass to CL_context. Set is_changed to true initially so path tracer
            only writes current color instead of merging it with previous.
          */
         this->render_scene->main_camera.setBuffer(&cam_data);
         this->render_scene->main_camera.is_changed = true;
 
-        glfw_manager.setupGlBuffer();
-        cl_manager.setupBuffers(glfw_manager.rbo_IDs, scene_data, mat_data, &cam_data);
+        cl_manager.setupBuffers(glfw_manager.rbo_IDs,
+                                render_scene->vert_data,
+                                render_scene->mat_data,
+                                render_scene->bvh.gpu_node_list,
+                                &cam_data);
 
-        /* Pass Scene Model Data. If not present NULL Buffer will be passed. Since other arguments need to be passed
+        /* Pass Scene/Model Data and BVH if present. If not present NULL Buffer will be passed. Since other arguments need to be passed
          * regularly, we pass them in the loop inside start function. Scene and material data remain constant hence passed
          * only once here.
          */
-        if(!scene_data.empty())
+        cl_int err = 0;
+        cl_int scene_size = render_scene->vert_data.size();
+        cl_int bvh_size = render_scene->bvh.gpu_node_list.size();
+        if(!render_scene->vert_data.empty())
         {
-            cl_int err = 0;
-            scene_size = scene_data.size();
 
-            err = clSetKernelArg(cl_manager.rend_kernel, 3, sizeof(cl_mem), &cl_manager.scene_buffer);
+            err = clSetKernelArg(cl_manager.rend_kernel, 3, sizeof(cl_int), &scene_size);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
 
-            err = clSetKernelArg(cl_manager.rend_kernel, 4, sizeof(cl_mem), &cl_manager.mat_buffer);
+            err = clSetKernelArg(cl_manager.rend_kernel, 4, sizeof(cl_mem), &cl_manager.vert_buffer);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
+
+            err = clSetKernelArg(cl_manager.rend_kernel, 5, sizeof(cl_mem), &cl_manager.mat_buffer);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
         }
         else
         {
-            cl_int err = 0;
-            err = clSetKernelArg(cl_manager.rend_kernel, 3, sizeof(cl_mem), NULL);
+            err = clSetKernelArg(cl_manager.rend_kernel, 3, sizeof(cl_int), &scene_size);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
 
             err = clSetKernelArg(cl_manager.rend_kernel, 4, sizeof(cl_mem), NULL);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
+
+            err = clSetKernelArg(cl_manager.rend_kernel, 5, sizeof(cl_mem), NULL);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
         }
 
+        if(!render_scene->bvh.gpu_node_list.empty())
+        {
+            err = clSetKernelArg(cl_manager.rend_kernel, 6, sizeof(cl_int), &bvh_size);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
 
+            err = clSetKernelArg(cl_manager.rend_kernel, 7, sizeof(cl_mem), &cl_manager.bvh_buffer);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
+        }
+        else
+        {
+            err = clSetKernelArg(cl_manager.rend_kernel, 6, sizeof(cl_int), &bvh_size);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
+
+            err = clSetKernelArg(cl_manager.rend_kernel, 7, sizeof(cl_mem), NULL);
+            CL_context::checkError(err, __FILE__, __LINE__ -1);
+        }
     }
 
     void Renderer::start()
     {
+        std::cout << "Starting Renderer..." << std::endl;
+
         int frame_count = 0;
         unsigned long samples_taken = 0;
         bool buffer_switch = true;
@@ -209,8 +276,8 @@ namespace yune
         double exec_time_ppk = 0.0;     // Post-processing Kernel execution time.
         float skip_ticks = 16.666;      // in ms. If kernel takes too long to finish. We need to update GUI ever 16.66 ms.
         cl_uint seed;
-        cl_int err = 0, reset = 0, kernel_status = CL_COMPLETE;
-        cl_event rk_event;
+        cl_int err = 0, reset = 0, kernel_status = CL_COMPLETE, k2_status = CL_COMPLETE;
+        cl_event rk_event, acquire_event;
 
         //Store the value of GI check. Pass as argument only when there is a change
         bool gi_check = 0;
@@ -226,8 +293,8 @@ namespace yune
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glDrawBuffer(GL_BACK);
         glfwSetTime(0.f);
-
         glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
+        cl_int block = 0;
         while(!glfw_manager.gui->stop_btn && !glfwWindowShouldClose(glfw_manager.window))
         {
             // If start button pressed, start rendering
@@ -247,14 +314,18 @@ namespace yune
                 if(kernel_status == CL_COMPLETE)
                 {
                     seed = dist(mt_engine);
-
                     updateRenderKernelArgs(gi_check, reset, seed, buffer_switch);
 
                     //Enqueue Kernel.
                     if(!cl_manager.target_device.clgl_event_ext)
                         glFinish();
 
-                    err = clEnqueueAcquireGLObjects(cl_manager.comm_queue, 2, cl_manager.image_buffers, 0, NULL, NULL);
+                    err = clEnqueueAcquireGLObjects(cl_manager.comm_queue, 2, cl_manager.image_buffers, 0, NULL, &acquire_event);
+                    CL_context::checkError(err, __FILE__, __LINE__ -1);
+                    clFlush(cl_manager.comm_queue);
+
+                    block = 1;
+                    err = clSetKernelArg(cl_manager.rend_kernel, 11, sizeof(cl_int), &block);
                     CL_context::checkError(err, __FILE__, __LINE__ -1);
 
                     err = clEnqueueNDRangeKernel(cl_manager.comm_queue,     // command queue
@@ -265,17 +336,60 @@ namespace yune
                                                  rk_lws,                    // local workgroup size
                                                  0,                         // Number of events in wait list.
                                                  NULL,                      // Events in wait list
+                                                 NULL
+                                                );
+                    CL_context::checkError(err, __FILE__, __LINE__ -1);
+
+                    block = 2;
+                    err = clSetKernelArg(cl_manager.rend_kernel, 11, sizeof(cl_int), &block);
+                    CL_context::checkError(err, __FILE__, __LINE__ -1);
+
+                    err = clEnqueueNDRangeKernel(cl_manager.comm_queue,     // command queue
+                                                 cl_manager.rend_kernel,    // kernel
+                                                 2,                         // global work dimensions
+                                                 NULL,                      // global work offset
+                                                 rk_gws,                    // global workgroup size
+                                                 rk_lws,                    // local workgroup size
+                                                 0,                         // Number of events in wait list.
+                                                 NULL,                      // Events in wait list
+                                                 NULL              // Event
+                                                );
+                    CL_context::checkError(err, __FILE__, __LINE__ -1);
+                    block = 3;
+                    err = clSetKernelArg(cl_manager.rend_kernel, 11, sizeof(cl_int), &block);
+                    CL_context::checkError(err, __FILE__, __LINE__ -1);
+                    err = clEnqueueNDRangeKernel(cl_manager.comm_queue,     // command queue
+                                                 cl_manager.rend_kernel,    // kernel
+                                                 2,                         // global work dimensions
+                                                 NULL,                      // global work offset
+                                                 rk_gws,                    // global workgroup size
+                                                 rk_lws,                    // local workgroup size
+                                                 0,                         // Number of events in wait list.
+                                                 NULL,            // Events in wait list
+                                                 NULL                 // Event
+                                                );
+                    CL_context::checkError(err, __FILE__, __LINE__ -1);
+
+                    block = 4;
+                    err = clSetKernelArg(cl_manager.rend_kernel, 11, sizeof(cl_int), &block);
+                    CL_context::checkError(err, __FILE__, __LINE__ -1);
+                    err = clEnqueueNDRangeKernel(cl_manager.comm_queue,     // command queue
+                                                 cl_manager.rend_kernel,    // kernel
+                                                 2,                         // global work dimensions
+                                                 NULL,                      // global work offset
+                                                 rk_gws,                    // global workgroup size
+                                                 rk_lws,                    // local workgroup size
+                                                 0,                         // Number of events in wait list.
+                                                 NULL,                       // Events in wait list
                                                  &rk_event              // Event
                                                 );
                     CL_context::checkError(err, __FILE__, __LINE__ -1);
 
                     err = clEnqueueReleaseGLObjects(cl_manager.comm_queue, 2, cl_manager.image_buffers, 0, NULL, NULL);
                     CL_context::checkError(err, __FILE__, __LINE__ -1);
-
-                    //Issue this kernel to the device. Now after this we can start querying whether the kernel finished or not.
                     clFlush(cl_manager.comm_queue);
-                    submit_time = glfwGetTime() * 1000.0;
 
+                    submit_time = glfwGetTime() * 1000.0;
                 }
 
                 // Check if kernel completed execution. If so, then apply post-processing kernel (Mainly tone mapping and Gamma correction)
@@ -287,7 +401,6 @@ namespace yune
                     clGetEventProfilingInfo(rk_event, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
                     clGetEventProfilingInfo(rk_event, CL_PROFILING_COMMAND_END, sizeof(time_finish), &time_finish, NULL);
                     clReleaseEvent(rk_event);
-
                     exec_time_rk += (time_finish - time_start)/1000000.0;
 
                      //Enqueue Post Processing kernel.
@@ -299,6 +412,8 @@ namespace yune
 
                     cl_event ppk_event;
                     updatePostProcessingKernelArgs(reset, buffer_switch);
+
+
                     err = clEnqueueNDRangeKernel(cl_manager.comm_queue,     // command queue
                                                  cl_manager.pp_kernel,      // kernel
                                                  2,                         // global work dimensions
@@ -375,7 +490,7 @@ namespace yune
 
             // Check the time passed since kernel was enqueued. If time passed is greater than skip_ticks or if the kernel finished execution draw GUI and swapbuffers.
             current_time = glfwGetTime() * 1000.0;
-            if( kernel_status == CL_COMPLETE || ( (current_time - submit_time) >= skip_ticks)  )
+            if( (kernel_status == CL_COMPLETE) || ( (current_time - submit_time) >= skip_ticks)  )
             {
                 submit_time = current_time;
 
@@ -397,7 +512,7 @@ namespace yune
         }
 
     }
-    void Renderer::updateRenderKernelArgs(bool& gi_check, cl_int& reset, cl_uint seed, bool buffer_switch)
+    void Renderer::updateRenderKernelArgs(bool& gi_check, cl_int& reset, cl_uint& seed, bool buffer_switch)
     {
         cl_int err = 0;
         cl_int new_reset = 0;
@@ -456,7 +571,7 @@ namespace yune
             gi_check = glfw_manager.gui->gi_check->checked();
             cl_int check = gi_check;
 
-            err = clSetKernelArg(cl_manager.rend_kernel, 5, sizeof(cl_int), &check);
+            err = clSetKernelArg(cl_manager.rend_kernel, 8, sizeof(cl_int), &check);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
             new_reset = 1;
         }
@@ -465,18 +580,13 @@ namespace yune
         if (reset != new_reset)
         {
             reset = new_reset;
-            err = clSetKernelArg(cl_manager.rend_kernel, 6, sizeof(cl_int), &reset);
+            err = clSetKernelArg(cl_manager.rend_kernel, 9, sizeof(cl_int), &reset);
             CL_context::checkError(err, __FILE__, __LINE__ -1);
         }
-
+        //std::cout << seed << std::endl;
         // Pass a random seed value.
-        err = clSetKernelArg(cl_manager.rend_kernel, 7, sizeof(cl_uint), &seed);
+        err = clSetKernelArg(cl_manager.rend_kernel, 10, sizeof(cl_uint), &seed);
         CL_context::checkError(err, __FILE__, __LINE__ -1);
-
-        // Pass the size of the triangles in the scene
-        err = clSetKernelArg(cl_manager.rend_kernel, 8, sizeof(cl_int), &scene_size);
-        CL_context::checkError(err, __FILE__, __LINE__ -1);
-
     }
 
     void Renderer::updatePostProcessingKernelArgs(cl_int reset, bool buffer_switch)
@@ -545,6 +655,10 @@ namespace yune
 
             glReadBuffer(GL_COLOR_ATTACHMENT2);
             glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, img_data);
+
+           //for(int i = 0; i < scanline_width*height*3; i+=3 )
+           //     std::cout << img_dataf[i] << ", " <<  img_dataf[i+1] << ", " <<  img_dataf[i+2] << std::endl;
+
             bitmap = FreeImage_ConvertFromRawBits(img_data, width, height, scanline_width, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, false);
 
             fn = glfw_manager.gui->save_img_name->value() + "-" + std::to_string(samples_taken) + "spp-" + std::to_string(time_passed) + "sec-" + std::to_string(fps) + "fps" + ext;

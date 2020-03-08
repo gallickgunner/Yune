@@ -62,7 +62,7 @@ struct Cam
     cl_float pad[3];            // padding 12 bytes to reach 80 (next multiple of 16)
 } __attribute__((aligned(16)));
 
-struct Triangle
+struct TriangleGPU
 {
     cl_float4 v1;
     cl_float4 v2;
@@ -74,20 +74,19 @@ struct Triangle
     cl_float pad[3];    // padding 12 bytes - to make it 112 (next multiple of 16)
 } __attribute__((aligned(16)));
 
-struct Test
+struct AABB
 {
-    cl_float a;
-    cl_float b;
-    cl_float c;
-    cl_float d;
-    /*cl_float4 v1;
-    cl_float4 v2;
-    cl_float4 v3;
-    cl_float4 vn1;
-    cl_float4 vn2;
-    cl_float4 vn3;
-    cl_int matID;       // total size till here = 100 bytes
-    cl_float pad[3];    // padding 12 bytes - to make it 112 (next multiple of 16)*/
+    cl_float4 p_min;
+    cl_float4 p_max;
+
+}__attribute__((aligned(16)));
+
+struct BVHNodeGPU
+{
+    AABB aabb;          //32
+    cl_int vert_list[10];//40
+    cl_int child_idx;   //4
+    cl_int vert_len;    //4 - total 80
 } __attribute__((aligned(16)));
 
 struct Material
@@ -102,5 +101,24 @@ struct Material
     cl_short is_transmissive;    // total 64 bytes.
 } __attribute__((aligned(16)));
 
+inline cl_float4 operator+ (cl_float4& a, cl_float4& b)
+{
+    return {a.s[0] + b.s[0], a.s[1] + b.s[1], a.s[2] + b.s[2], ((a.s[3] + b.s[3]) >= 1) ? 1.0f : 0.0f };
+}
+
+inline cl_float4 operator- (cl_float4& a, cl_float4& b)
+{
+    return {a.s[0] - b.s[0], a.s[1] - b.s[1], a.s[2] - b.s[2], (a.s[3] == 1 || b.s[3] == 1) ? 1.0f : 0.0f };
+}
+
+inline cl_float4 operator/ (cl_float4& a, const cl_float& b)
+{
+    return {a.s[0] / b, a.s[1] / b, a.s[2] / b, (a.s[3] == 1) ? 1.0f : 0.0f };
+}
+
+inline cl_float4 operator* (cl_float4& a, cl_float& b)
+{
+    return {a.s[0] * b, a.s[1] * b, a.s[2] * b, (a.s[3] == 1) ? 1.0f : 0.0f };
+}
 
 #endif // CL_HEADERS_H

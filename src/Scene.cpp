@@ -30,6 +30,7 @@
 #include <sstream>
 #include <string>
 #include <map>
+#include <limits>
 
 namespace yune
 {
@@ -38,17 +39,15 @@ namespace yune
         //ctor
     }
 
-    Scene::Scene(Camera cam) : main_camera(cam)
+    Scene::Scene(Camera cam, BVH bvh) : main_camera(cam), bvh(bvh)
     {
-
     }
 
     Scene::~Scene()
     {
-
     }
 
-    void Scene::loadModel(std::string objfile, std::vector<Triangle>& scene_data, std::string matfile, std::vector<Material>& mat_data)
+    void Scene::loadModel(std::string objfile, std::string matfile)
     {
         if(objfile.substr(objfile.length()-4, objfile.length()) != ".rtt")
             throw RuntimeError("Invalid Object file. Please provide an object file with extension \".rtt\" ");
@@ -62,6 +61,7 @@ namespace yune
 
         if(file.is_open())
         {
+            std::cout << "Reading Material File..." << std::endl;
             std::string extract, line;
             cl_float x,y,z,w = 1.0f;
 
@@ -85,7 +85,6 @@ namespace yune
                 else if(extract == "ke")
                 {
                     ss >> x >> y >> z;
-
                     mat_data.back().emissive = {x,y,z,w};
                 }
                 else if(extract == "kd")
@@ -114,11 +113,17 @@ namespace yune
         else
             throw RuntimeError("Error opening material file...");
 
+        //Read Vertex Data
         file.open(objfile);
         if(file.is_open())
         {
+            std::cout << "Reading Object File..." << std::endl;
             cl_float x,y,z,w = 1.f;
             int i = 0, j = 0, mat_id = 0;
+            float inf = std::numeric_limits<float>::max();
+            AABB root;
+            root.p_min = {inf, inf, inf, 1.0};
+            root.p_max = {-inf, -inf, -inf, 1.0};
             std::string extract, line;
 
             while(getline(file, line))
@@ -134,8 +139,8 @@ namespace yune
 
                 if(extract == "f")
                 {
-                    scene_data.push_back(Triangle());
-                    scene_data.back().matID = mat_id;
+                    cpu_tri_list.push_back(new TriangleCPU());
+                    cpu_tri_list.back()->props.matID = mat_id;
                 }
 
                 else if (extract == "matID")
@@ -148,36 +153,54 @@ namespace yune
                     i++;
                     w = 1.f;
                     ss >> x >> y >> z;
-                    //std::cout << x << y << z << "\n";
+
                     if(i == 1)
-                        scene_data.back().v1 = {x,y,z,w};
+                        cpu_tri_list.back()->props.v1 = {x,y,z,w};
                     else if(i == 2)
-                        scene_data.back().v2 = {x,y,z,w};
+                        cpu_tri_list.back()->props.v2 = {x,y,z,w};
                     else if (i == 3)
                     {
-                        scene_data.back().v3 = {x,y,z,w};
+                        cpu_tri_list.back()->props.v3 = {x,y,z,w};
+
+                        //Compute AABB after 3rd vertex is fed.
+                        cpu_tri_list.back()->computeCentroid();
                         i = 0;
+
+                        for(int k = 0; k < 3; k++)
+                        {
+                            root.p_min.s[k] = std::min(root.p_min.s[k], cpu_tri_list.back()->aabb.p_min.s[k]);
+                            root.p_max.s[k] = std::max(root.p_max.s[k], cpu_tri_list.back()->aabb.p_max.s[k]);
+                        }
                     }
                 }
                 else if (extract == "n")
                 {
-
                     j++;
                     w = 0.f;
                     ss >> x >> y >> z;
 
                     if(j == 1)
-                        scene_data.back().vn1 = {x,y,z,w};
+                        cpu_tri_list.back()->props.vn1 = {x,y,z,w};
                     else if(j == 2)
-                        scene_data.back().vn2 = {x,y,z,w};
+                        cpu_tri_list.back()->props.vn2 = {x,y,z,w};
                     else if (j == 3)
                     {
-                        scene_data.back().vn3 = {x,y,z,w};
+                        cpu_tri_list.back()->props.vn3 = {x,y,z,w};
                         j = 0;
                     }
                 }
             }
             file.close();
+            for(int i = 0; i < cpu_tri_list.size(); i++)
+                vert_data.push_back(cpu_tri_list[i]->props);
+
+            std::cout << "Total Triangles Loaded: " << vert_data.size() << std::endl;
+            if(bvh.bins > 0)
+            {
+                std::cout << "Creating BVH..." << std::endl;
+                bvh.createBVH(root, cpu_tri_list);
+                std::cout << "BVH Size: " << bvh.gpu_node_list.size() << " Nodes" << std::endl;
+            }
         }
         else
             throw RuntimeError("Error opening object file...");

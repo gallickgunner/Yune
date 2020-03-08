@@ -58,8 +58,9 @@ namespace yune
         image_buffers[0] = NULL;
         image_buffers[1] = NULL;
         image_buffers[2] = NULL;
-        scene_buffer = NULL;
+        vert_buffer = NULL;
         mat_buffer = NULL;
+        bvh_buffer = NULL;
         camera_buffer = NULL;
         rk_program = NULL;
         ppk_program = NULL;
@@ -85,10 +86,12 @@ namespace yune
             clReleaseMemObject(image_buffers[1]);
         if(image_buffers[2])
             clReleaseMemObject(image_buffers[2]);
-        if(scene_buffer)
-            clReleaseMemObject(scene_buffer);
+        if(vert_buffer)
+            clReleaseMemObject(vert_buffer);
         if(mat_buffer)
             clReleaseMemObject(mat_buffer);
+        if(bvh_buffer)
+            clReleaseMemObject(bvh_buffer);
         if(camera_buffer)
             clReleaseMemObject(camera_buffer);
         if(context)
@@ -244,13 +247,16 @@ namespace yune
             std::cout << "Kernel local memory requirement exceeds Device's local memory.\nProgram may crash during kernel processing.\n" << std::endl;
     }
 
-    void CL_context::setupBuffers(GLuint* rbo_IDs, std::vector<Triangle>& scene_data, std::vector<Material>& mat_data, Cam* cam_data)
+    void CL_context::setupBuffers(GLuint* rbo_IDs, std::vector<TriangleGPU>& vert_data, std::vector<Material>& mat_data, std::vector<BVHNodeGPU>& bvh_data, Cam* cam_data)
     {
         cl_int err = 0;
 
-        //Check if buffer size exceed Device's global memory.
-        if( scene_data.size() > target_device.global_mem_size)
-            throw RuntimeError("Model Data size exceeds Device's global memory size.\nProgram may crash during kernel processing.");
+        //Check if BVH, Material and Vertex Data combined exceed Device's global memory.
+        float tot_mb = vert_data.size() * sizeof(TriangleGPU) / (1024*1024);
+        tot_mb += mat_data.size() * sizeof(Material) / (1024*1024);
+        tot_mb += bvh_data.size() * sizeof(BVHNodeGPU) / (1024*1024);
+        if( tot_mb > target_device.global_mem_size)
+            throw RuntimeError("Scene Data size exceeds Device's global memory size.");
 
         //Setup Image Buffers for reading/writing and Post processing. Also setup Buffer Objects containing scene data and camera data.
         image_buffers[0] = clCreateFromGLRenderbuffer(context, CL_MEM_READ_WRITE, rbo_IDs[0], &err);
@@ -265,12 +271,18 @@ namespace yune
         camera_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(Cam), cam_data, &err);
         checkError(err, __FILE__, __LINE__ - 1);
 
-        if(!scene_data.empty())
+        if(!vert_data.empty())
         {
-            scene_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(Triangle) * scene_data.size(), scene_data.data(), &err);
+            vert_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(TriangleGPU) * vert_data.size(), vert_data.data(), &err);
             checkError(err, __FILE__, __LINE__);
 
             mat_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(Material) * mat_data.size(), mat_data.data(), &err);
+            checkError(err, __FILE__, __LINE__);
+        }
+
+        if(!bvh_data.empty())
+        {
+            bvh_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR, sizeof(BVHNodeGPU) * bvh_data.size(), bvh_data.data(), &err);
             checkError(err, __FILE__, __LINE__);
         }
 

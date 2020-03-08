@@ -94,7 +94,7 @@ namespace yune
                                   { auto md = new nanogui::MessageDialog(this->screen,
                                                                nanogui::MessageDialog::Type::Information,
                                                                "Controls Information",
-                                                               "Hold Space and move mouse to rotate camera. Move with arrow keys. Press \"Stop\" to close window and \"Save\" to save the current frame.");
+                                                               "Hold Space and move mouse to rotate camera. Move with arrow keys. Use \"HOME\" and \"END\" keys to move in Camera's Up axis. Press \"Stop\" to close window and \"Save\" to save the current frame.");
                                     md->setTheme(this->panel_theme);
                                   });
 

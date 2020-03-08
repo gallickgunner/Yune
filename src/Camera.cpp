@@ -29,7 +29,7 @@
 namespace yune
 {
 
-    Camera::Camera() : y_FOV(60.0f), view_to_world_mat(), rotation_speed(0.25f), move_speed(0.3f)
+    Camera::Camera() : y_FOV(60.0f), view_to_world_mat(), rotation_speed(0.25f), move_speed(0.1f)
     {
         //ctor
         setViewMatrix(Vec4f(1.f, 0.f, 0.f, 0.f),  // side
@@ -89,7 +89,6 @@ namespace yune
 
     void Camera::setOrientation(const Vec4f& dir, float pitch, float yaw)
     {
-
         Mat4x4f rotx = Mat4x4f::Identity();
         Mat4x4f roty = Mat4x4f::Identity();
 
@@ -105,6 +104,9 @@ namespace yune
             view_to_world_mat = rotx * view_to_world_mat;
         view_to_world_mat = roty * view_to_world_mat;
 
+        side = view_to_world_mat.col(0).normalized();
+        up = view_to_world_mat.col(1).normalized();
+        look_at = -view_to_world_mat.col(2).normalized();
 
         if(dir.norm() > 0)
         {
@@ -121,11 +123,6 @@ namespace yune
             else if (dir.y() < 0)
                 eye -= up * move_speed;
         }
-
-        side = view_to_world_mat.col(0).normalized();
-        up = view_to_world_mat.col(1).normalized();
-        look_at = -view_to_world_mat.col(2).normalized();
-
         view_to_world_mat.col(3) = this->eye;
         is_changed = true;
     }

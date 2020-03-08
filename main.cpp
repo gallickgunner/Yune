@@ -33,16 +33,8 @@ int main()
 {
     try
     {
-        std::vector<Triangle> scene_data;
-        std::vector<Material> mat_data;
-        //cl_float8 test;
-
         Renderer rendr;
-        Camera main_cam(90);
-        Scene render_scene(main_cam);
-
-        render_scene.loadModel("CornelBox_V3.rtt",scene_data,"Material.pbm",mat_data);
-        rendr.setup(&render_scene, scene_data, mat_data);
+        rendr.setup();
         rendr.start();
     }
     catch(const std::exception& err)

@@ -1,0 +1,65 @@
+//Grey Walls and Cubes
+id 1
+ke 0 0 0
+kd 0.9 0.9 0.9
+ks 0 0 0
+ior 1.5
+alpha_x 10
+alpha_y 10
+mirror 0
+transmissive 0
+
+//Red Wall
+id 2
+ke 0 0 0
+kd 0.8 0 0
+ks 0 0 0
+ior 1.5
+alpha_x 10
+alpha_y 10
+mirror 0
+transmissive 0
+
+//Green Wall
+id 3
+ke 0 0 0
+kd 0 0.8 0
+ks 0 0 0
+ior 1.5
+alpha_x 1000
+alpha_y 1000
+mirror 0
+transmissive 0
+
+//Glass Mirror+Transmissive
+id 4
+ke 0 0 0
+kd 0.7 0.7 0.7
+ks 0.08 0.08 0.08
+ior 1.6
+alpha_x 1000
+alpha_y 1000
+mirror 1
+transmissive 1
+
+//Mirror
+id 5
+ke 0 0 0
+kd 0.7 0.7 0.7
+ks 0.08 0.08 0.08
+ior 1.6
+alpha_x 1000
+alpha_y 1000
+mirror 1
+transmissive 0
+
+//Glossy
+id 6
+ke 0 0 0
+kd 0.1 0.1 0.1
+ks 0.767 0.767 0.767
+ior 1.0
+alpha_x 1000
+alpha_y 1000
+mirror 0
+transmissive 0

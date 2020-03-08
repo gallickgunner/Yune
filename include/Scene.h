@@ -23,9 +23,11 @@
 
 #ifndef SCENE_H
 #define SCENE_H
-#include <CL_headers.h>
 
+#include <CL_headers.h>
 #include <Camera.h>
+#include "TriangleCPU.h"
+#include "BVH.h"
 
 #include <vector>
 #include <string>
@@ -36,14 +38,18 @@ namespace yune
     {
         public:
             Scene();
-            Scene(Camera main_cam);
+            Scene(Camera main_cam, BVH bvh);
             ~Scene();
             void setBuffer( );
-            void loadModel(std::string objfile, std::vector<Triangle>& scene_data, std::string matfile, std::vector<Material>& mat_data);
+            void loadModel(std::string objfile, std::string matfile);
 
             Camera main_camera;
+            std::vector<TriangleGPU> vert_data;
+            std::vector<Material> mat_data;
+            BVH bvh;
 
-
+        private:
+            std::vector<TriangleCPU*> cpu_tri_list;
     };
 }
 #endif // SCENE_H

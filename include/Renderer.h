@@ -42,7 +42,6 @@ namespace yune
     {
         public:
             Renderer();                     /**< Default Constructor. */
-            Renderer(Scene& render_scene);  /**< Overloaded Constructor taking \ref Scene object as input. */
             ~Renderer();                    /**< Default Destructor. */
 
             /** \brief A function to setup the \ref Renderer object.
@@ -52,7 +51,7 @@ namespace yune
              * \param[in] ext           String representing the extension. Valid extensions are {png, jpg, jpe, jpg, bmp}
              *
              */
-            void setup(Scene* render_scene , std::vector<Triangle>& scene_data, std::vector<Material>& mat_data);
+            void setup();
 
             /** \brief Start the renderer by enqueuing kernel in a loop till the window closes.
              *  The start function currently implements logic for a kernel that takes 2 images. One for reading, other for writing.
@@ -84,18 +83,24 @@ namespace yune
             Scene* render_scene;           /**< A \ref Scene object. Contains the Model data, lights and Camera. */
 
             private:
-            void updateRenderKernelArgs(bool& gi_check, cl_int& reset, cl_uint seed, bool buffer_switch);
+            struct RendererOptions
+            {
+                int width, height, bvh_bins;
+                bool is_fullscreen;
+                std::string compiler_opts, rk_fn, rk_func_name, ppk_fn, ppk_func_name, rtt_fn, pbm_fn;
+            };
+
+            void loadOptions();
+            void updateRenderKernelArgs(bool& gi_check, cl_int& reset, cl_uint& seed, bool buffer_switch);
             void updatePostProcessingKernelArgs(cl_int reset, bool buffer_switch);
             void saveImage(unsigned long samples_taken, int time_passed, int fps, bool hdr_check, bool buffer_switch);
 
+            RendererOptions yune_options;
             size_t rk_gws[2];                   /**< Global workgroup size for Rendeirng Kernel.*/
             size_t ppk_gws[2];                  /**< Global workgroup size for Post-processing Kernel.*/
             size_t* rk_lws;                     /**< Local workgroup size for Rendering Kernel. Dynamic allocation because it can be NULL if not provided through options.*/
             size_t* ppk_lws;                   /**< Local workgroup size for Post-processing Kernel. Dynamic allocation because it can be NULL if not provided through options.*/
             Cam cam_data;                       /**< A Cam structure containing Camera data for passing to the GPU. A similar structure resides on GPU.*/
-            cl_int scene_size;
-            //std::vector<Triangle> scene_data;   /**< A buffer containing Scene data for passing to the GPU.*/
-            //std::vector<Material> mat_data;     /**< A buffer containing material data for passing to the GPU.*/
     };
 }
 #endif // RENDERER_H

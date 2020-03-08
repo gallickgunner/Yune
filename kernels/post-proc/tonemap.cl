@@ -1,6 +1,6 @@
 #define SATURATION_EXP  1.0f
 #define GAMMA           2.2f
-
+#define EPSILON         0.001f
 __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
                                CLK_ADDRESS_CLAMP_TO_EDGE   |
                                CLK_FILTER_NEAREST;
@@ -23,7 +23,7 @@ __kernel void tonemap(__read_only image2d_t current_frame, __read_only image2d_t
     float4 hdr_color = read_imagef(current_frame, sampler, pixel);
     float4 ldr_color = hdr_color;
     
-    ldr_color = tonemapReinhard(hdr_color, 0.6f);
+    ldr_color = tonemapReinhard(hdr_color, 1.0f);
     //ldr_color = tonemapJohnHable(hdr_color);
 
     //Apply Gamma correction
@@ -34,7 +34,7 @@ __kernel void tonemap(__read_only image2d_t current_frame, __read_only image2d_t
 
 float getYluminance(float4 color)
 {
-    return 0.212671f*color.x + 0.715160f*color.y + 0.072169f*color.z;
+    return 0.212671f*color.x + 0.715160f*color.y + 0.072169f*color.z + EPSILON;
 }
 
 float4 tonemapReinhard(float4 col, float lum_white)
