@@ -8,9 +8,3 @@
 
 bin/
 obj/
-
-# any images generated
-
-*.jpg
-*.png
-*.exr
