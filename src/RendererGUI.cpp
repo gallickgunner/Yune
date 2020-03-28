@@ -107,7 +107,7 @@ namespace yune {
                                          );
         cl_manager.setup();
         bool kernel_loaded = false;
-        kernel_loaded = cl_manager.createRenderProgram("udpt.cl", "./kernels/legacy/udpt.cl", false);
+        kernel_loaded = cl_manager.createRenderProgram("udpt.cl", "./kernels/legacy/udpt-primitives.cl", false);
         kernel_loaded &= cl_manager.createPostProcProgram("tonemap.cl", "./kernels/post-proc/tonemap.cl", false);
         if(kernel_loaded)
         {
@@ -117,7 +117,7 @@ namespace yune {
         else
         {
             RendererGUI::mb_title = "Error!";
-            RendererGUI::mb_msg = "Failed to load default kernels. Either someone modified them or you are missing default files \"./kernels/legacy/udpt.cl\" and \"./kernels/post-proc/tonemap.cl\"";
+            RendererGUI::mb_msg = "Failed to load default kernels. Either someone modified them or you are missing default files \"./kernels/legacy/udpt-primitives.cl\" and \"./kernels/post-proc/tonemap.cl\"";
         }
         return true;
     }
@@ -539,6 +539,9 @@ namespace yune {
                     renderer.save_samples_fn = std::string(input_fn);
                 ImGui::PopItemWidth();
                 renderExtBox();
+                ImGui::Checkbox("Save Image as Screencap", &renderer.save_editor);
+                ImGui::SameLine();
+                showHelpMarker("Checking this causes \"Save At Samples\" to work as screen capture and saves Editor to the image as well.");
             }
 
             //BVH Settings

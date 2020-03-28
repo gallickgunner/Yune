@@ -14,4 +14,6 @@ obj/
 *.jpg
 *.png
 *.exr
-Thumbs.db
+
+#imgui settings
+*.ini

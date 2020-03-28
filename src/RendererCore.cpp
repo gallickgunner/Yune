@@ -52,6 +52,7 @@ namespace yune
         resetValues();
         skip_ticks = 16.666;
 
+        save_editor = false;
         blocks = glm::ivec2(2,2);
         save_samples_ext = ".jpg";
 
@@ -623,7 +624,13 @@ namespace yune
         else
         {
             unsigned char* img_data = new unsigned char[stride*height*3];
-            glReadBuffer(GL_COLOR_ATTACHMENT3);
+            if(save_editor && !save_pending)
+            {
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+                glReadBuffer(GL_BACK);
+            }
+            else
+                glReadBuffer(GL_COLOR_ATTACHMENT3);
             glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, img_data);
 
             if(save_ext == ".png")

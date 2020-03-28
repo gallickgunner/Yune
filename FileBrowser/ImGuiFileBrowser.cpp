@@ -658,7 +658,7 @@ namespace imgui_addons
                             input_fn[idx++] = valid_exts[selected_ext_idx][j];
                         input_fn[idx++] = '\0';
                     }
-                    else
+                    if(dialog_mode != DialogMode::SELECT)
                         filterFiles(FilterMode_Files);
                 }
             }

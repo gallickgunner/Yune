@@ -78,7 +78,7 @@ namespace yune
 
             Scene render_scene;
             std::string save_fn, save_ext, save_samples_fn, save_samples_ext;
-            bool save_pending, new_gi_check;
+            bool save_pending, save_editor, new_gi_check;
             unsigned long samples_taken, save_at_samples, time_passed;
             float ms_per_rk, ms_per_ppk, mspf_avg;
             int fps;
