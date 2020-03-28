@@ -1,3 +1,5 @@
+#yune-preproc kernel-name tonemap
+
 #define SATURATION_EXP  1.0f
 #define GAMMA           2.2f
 #define EPSILON         0.001f

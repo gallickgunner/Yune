@@ -44,9 +44,9 @@ typedef struct Quad{
 
     float4 pos;
     float4 norm;
-    float4 emissive_col;
-    float4 diffuse_col;
-    float4 specular_col;
+    float4 ke;
+    float4 kd;
+    float4 ks;
     float4 edge_l;
     float4 edge_w;
     float phong_exponent;
@@ -68,14 +68,17 @@ typedef struct Triangle{
 //For use with Triangle geometry.
 typedef struct Material{
 
-    float4 emissive;
-    float4 diff;
-    float4 spec;
-    float ior;
+    float4 ke;
+    float4 kd;
+    float4 ks;
+    float n;
+    float k;
+    float px;
+    float py;
     float alpha_x;
     float alpha_y;
-    short is_specular;
-    short is_transmissive;    // total 64 bytes.
+    int is_specular;
+    int is_transmissive;    // total 80 bytes.
 } Material;
 
 typedef struct AABB{    
@@ -102,7 +105,7 @@ __constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
 
 __constant Quad light_sources[LIGHT_SIZE] = { {     (float4)(-0.1979f, 0.703f, -3.1972f, 1.f),
                                                     (float4)(0.f, 1.f, 0.f, 0.f),      //norm
-                                                    (float4)(18.3f, 16.2f, 14.5f, 0.f),    //emissive col
+                                                    (float4)(18.3f, 16.2f, 14.5f, 0.f),    //ke col
                                                     (float4)(0.f, 0.f, 0.f, 0.f),       //diffuse col
                                                     (float4)(0.f, 0.f, 0.f, 0.f),       //specular col
                                                     (float4)(0.4f, 0.f, 0.f, 0.f),       //edge_l
@@ -154,41 +157,18 @@ bool sampleGlossyPdf(HitInfo hit, __global Triangle* scene_data, __global Materi
 
 __kernel void pathtracer(__write_only image2d_t outputImage, __read_only image2d_t inputImage, __constant Camera* main_cam, 
                          int scene_size, __global Triangle* scene_data, __global Material* mat_data, int bvh_size, __global BVHNodeGPU* bvh,
-                         int GI_CHECK, int reset, uint rand, int block)
+                         int GI_CHECK, int reset, uint rand, int block, int block_x, int block_y)
 {
-    int img_width;
-    int img_height;
-    int2 pixel;
-    //if(get_local_id(0) == 0 && get_local_id(0) == 0)
-    { 
-        img_width = get_image_width(outputImage);
-        img_height = get_image_height(outputImage);    
-        pixel = (int2)(get_global_id(0), get_global_id(1));
-        if(block == 1)
-        {            
-            if (pixel.x >= img_width/2 || pixel.y >= img_height/2)
-                return;
-        }
-        else if(block == 2)
-        {
-            pixel.x += img_width/2;
-            if (pixel.x >= img_width || pixel.y >= img_height/2)
-                return;
-        }
-        else if(block == 3)
-        {   
-            pixel.y += img_height/2;
-            if (pixel.x >= img_width/2 || pixel.y >= img_height)
-                return;
-        }
-        else if(block == 4)
-        {
-            pixel.x += img_width/2;
-            pixel.y += img_height/2;
-            if (pixel.x >= img_width || pixel.y >= img_height)
-                return;
-        }
-    }
+    int img_width = get_image_width(outputImage);
+    int img_height = get_image_height(outputImage);
+    int2 pixel = (int2)(get_global_id(0), get_global_id(1));
+    
+    pixel.x += ceil((float)img_width / block_x) * (block % block_x);
+    pixel.y += ceil((float)img_height / block_y) * (block / block_x);
+    
+    if (pixel.x >= img_width || pixel.y >= img_height)
+        return;
+    
     //create a camera ray and light ray
     Ray eye_ray, light_ray;
     float r1, r2;
@@ -471,7 +451,7 @@ void createLightPath(PathInfo* light_path, int* path_length, uint* seed, int bvh
     float area = length(light_sources[0].edge_l) * length(light_sources[0].edge_w);
     light_path[0].fwd_pdf = 1.0f / area;
     light_path[0].rev_pdf = 1.0;        //For Use in MIS later on..
-    light_path[0].contrib = light_sources[0].emissive_col / light_path[0].fwd_pdf;
+    light_path[0].contrib = light_sources[0].ke / light_path[0].fwd_pdf;
     
     cosineWeightedHemisphere(&light_ray, &pdf, hit, seed); 
        
@@ -609,8 +589,8 @@ float4 shading(int2 pixel, Ray ray, Ray light_ray, int GI_CHECK, uint* seed, int
             break;
         
         subpaths_color = (float4) (0.f, 0.f, 0.f, 1.f);
-        float4 spec_color = mat_data[scene_data[eye_path[i].hit_info.triangle_ID].matID].spec;
-        float4 emission = mat_data[scene_data[eye_path[i].hit_info.triangle_ID].matID].emissive;
+        float4 spec_color = mat_data[scene_data[eye_path[i].hit_info.triangle_ID].matID].ks;
+        float4 emission = mat_data[scene_data[eye_path[i].hit_info.triangle_ID].matID].ke;
         ks =  max(max(spec_color.x, max(spec_color.y, spec_color.z)), 0.1f); 
         
         throughput = eye_path[i].contrib;        
@@ -661,7 +641,7 @@ float4 shading(int2 pixel, Ray ray, Ray light_ray, int GI_CHECK, uint* seed, int
 
 float4 evaluateDirectLighting(int2 pixel , float4 w_o, HitInfo hit, uint* seed, int bvh_size, __global BVHNodeGPU* bvh, int scene_size, __global Triangle* scene_data,  __global Material* mat_data)
 {
-    float4 emission = mat_data[scene_data[hit.triangle_ID].matID].emissive;
+    float4 emission = mat_data[scene_data[hit.triangle_ID].matID].ke;
     float4 light_sample = (float4) (0.f, 0.f, 0.f, 0.f);
     float4 w_i;
     float light_pdf, brdf_prob = 0.0f; 
@@ -686,7 +666,7 @@ float4 evaluateDirectLighting(int2 pixel , float4 w_o, HitInfo hit, uint* seed, 
         sample_glossy = sampleGlossyPdf(hit, scene_data, mat_data, seed, &brdf_prob);
         if(brdf_prob == 0.0f)
             return emission;
-		light_sample = evaluateBRDF(w_i, w_o, hit, sample_glossy, brdf_prob, scene_data, mat_data) * light_sources[j].emissive_col * fmax(dot(w_i, hit.normal), 0.0f);
+		light_sample = evaluateBRDF(w_i, w_o, hit, sample_glossy, brdf_prob, scene_data, mat_data) * light_sources[j].ke * fmax(dot(w_i, hit.normal), 0.0f);
 		light_sample *= 1/light_pdf;
 	}
 	
@@ -728,7 +708,7 @@ float4 evaluateDirectLighting(int2 pixel , float4 w_o, HitInfo hit, uint* seed, 
     
     mis_weight = brdf_pdf;
     powerHeuristic(&mis_weight, light_pdf, brdf_pdf, 2);
-    brdf_sample =  evaluateBRDF(w_i, w_o, hit, sample_glossy, brdf_prob, scene_data, mat_data) * light_sources[j].emissive_col * fmax(dot(w_i, hit.normal), 0.0f);
+    brdf_sample =  evaluateBRDF(w_i, w_o, hit, sample_glossy, brdf_prob, scene_data, mat_data) * light_sources[j].ke * fmax(dot(w_i, hit.normal), 0.0f);
     brdf_sample *=  mis_weight / brdf_pdf;
     
     return (light_sample + brdf_sample + emission);
@@ -746,12 +726,12 @@ float4 evaluateBRDF(float4 w_i, float4 w_o, HitInfo hit_info, bool sample_glossy
     int matID = scene_data[hit_info.triangle_ID].matID;
     
     if(!sample_glossy)
-        color = mat_data[matID].diff * INV_PI / rr_prob;
+        color = mat_data[matID].kd * INV_PI / rr_prob;
     else
     {
-        cos_alpha = pow(fmax(dot(w_o, refl_vec), 0.0f), mat_data[matID].alpha_x + mat_data[matID].alpha_y);      
-        int phong_exp = mat_data[matID].alpha_x + mat_data[matID].alpha_y;
-        color = mat_data[matID].spec * cos_alpha * (phong_exp + 2) * INV_PI * 0.5f / rr_prob;
+        cos_alpha = pow(fmax(dot(w_o, refl_vec), 0.0f), mat_data[matID].px + mat_data[matID].py);      
+        int phong_exp = mat_data[matID].px + mat_data[matID].py;
+        color = mat_data[matID].ks * cos_alpha * (phong_exp + 2) * INV_PI * 0.5f / rr_prob;
     }        
     return color;    
 }
@@ -793,7 +773,7 @@ int sampleLights(HitInfo hit_info, float* light_pdf, float4* w_i, uint* seed)
             return i;
         }
         
-        weights[i] = length(light_sources[i].emissive_col) * cosine_falloff * area/ distance;
+        weights[i] = length(light_sources[i].ke) * cosine_falloff * area/ distance;
         sum += weights[i]; 
     }
     
@@ -867,7 +847,7 @@ void phongSampleHemisphere (Ray* ray, float* pdf, float4 w_i, HitInfo hit_info, 
     */
     int phong_exponent;
     int matID = scene_data[hit_info.triangle_ID].matID;
-    phong_exponent = mat_data[matID].alpha_x + mat_data[matID].alpha_y;
+    phong_exponent = mat_data[matID].px + mat_data[matID].py;
 
     float phi = 2*PI * r2;
     float costheta = pow(r1, 1.0f/(phong_exponent+1));
@@ -1055,7 +1035,7 @@ float calcPhongPDF(float4 w_i, float4 w_o, HitInfo hit_info, __global Triangle* 
     float costheta = fmax(0.0f, cos(dot(refl_dir, w_i)));
     float phong_exponent;
     int matID = scene_data[hit_info.triangle_ID].matID;
-    phong_exponent = mat_data[matID].alpha_x + mat_data[matID].alpha_y;
+    phong_exponent = mat_data[matID].px + mat_data[matID].py;
     
     return (phong_exponent+1) * 0.5 * INV_PI * pow(costheta, phong_exponent);    
 }
@@ -1070,40 +1050,40 @@ bool sampleGlossyPdf(HitInfo hit, __global Triangle* scene_data, __global Materi
     *seed = xor_shift(*seed);
     float r = *seed / (float) UINT_MAX;  
     
-    float4 spec, diff, sum;
+    float4 ks, kd, sum;
     float pd, ps; 
     
-    spec = mat_data[scene_data[hit.triangle_ID].matID].spec;
-    diff = mat_data[scene_data[hit.triangle_ID].matID].diff;
+    ks = mat_data[scene_data[hit.triangle_ID].matID].ks;
+    kd = mat_data[scene_data[hit.triangle_ID].matID].kd;
     
-    if(length(spec.xyz) == 0.0f)
+    if(length(ks.xyz) == 0.0f)
     {
         *prob = 1.0f;
         return false;        
     }
-    else if(length(diff.xyz) == 0.0f || diff.x + diff.y + diff.z == 0.0f)
+    else if(length(kd.xyz) == 0.0f || kd.x + kd.y + kd.z == 0.0f)
     {
         *prob = 1.0f;
         return true;        
     }
     
-    sum = spec + diff;
+    sum = ks + kd;
     float max_val = max(sum.x, max(sum.y, sum.z));
     
     if(max_val == sum.x)
     {
-        pd = diff.x;
-        ps = spec.x;
+        pd = kd.x;
+        ps = ks.x;
     }
     else if(max_val == sum.y)
     {
-        pd = diff.y;
-        ps = spec.y;
+        pd = kd.y;
+        ps = ks.y;
     }
     else
     {
-        pd = diff.z;
-        ps = spec.z;
+        pd = kd.z;
+        ps = ks.z;
     }
     
     if(max_val < 1.0f)

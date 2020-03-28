@@ -3,8 +3,10 @@
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
- *  researchers trying to implement Physically Based Rendering techniques.
+ *  "Yune" is a personal project and an educational raytracer/pathtracer. It's aimed at young
+ *  researchers trying to implement raytracing/pathtracing but don't want to mess with boilerplate code.
+ *  It provides all basic functionality to open a window, save images, etc. Since it's GPU based, you only need to modify
+ *  the kernel file and see your program in action. For details, check <https://github.com/gallickgunner/Yune>
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +26,8 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <CL_headers.h>
-#include <Camera.h>
+#include "CL_headers.h"
+#include "Camera.h"
 #include "TriangleCPU.h"
 #include "BVH.h"
 
@@ -38,18 +40,25 @@ namespace yune
     {
         public:
             Scene();
-            Scene(Camera main_cam, BVH bvh);
             ~Scene();
             void setBuffer( );
-            void loadModel(std::string objfile, std::string matfile);
+            void loadModel(std::string filepath, std::string filename);
+            void loadBVH(int bvh_bins);
+            void reloadMatFile();
 
             Camera main_camera;
             std::vector<TriangleGPU> vert_data;
             std::vector<Material> mat_data;
+            std::string scene_file, mat_file, mat_filename;
+            AABB root;
             BVH bvh;
+            int num_triangles;
+            float scene_size_kb, scene_size_mb;
 
         private:
-            std::vector<TriangleCPU*> cpu_tri_list;
+            void clearValues();
+            std::string getMatFileName(std::string filepath);
+            std::vector<TriangleCPU> cpu_tri_list;
     };
 }
 #endif // SCENE_H

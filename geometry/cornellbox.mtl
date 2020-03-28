@@ -1,0 +1,51 @@
+newmtl grey-walls-cubes
+ke 0 0 0
+kd 0.9 0.9 0.9
+ks 0 0 0
+
+newmtl red-wall
+ke 0 0 0
+kd 0.8 0 0
+ks 0 0 0
+
+newmtl green-wall
+ke 0 0 0
+kd 0 0.8 0
+ks 0 0 0
+
+newmtl teapot
+ke 0 0 0
+kd 0.6 0.6 0.6
+ks 0.2 0.2 0.2
+px 20
+py 20
+
+newmtl mirror-transmissive
+ke 0 0 0
+kd 0.7 0.7 0.7
+ks 0.08 0.08 0.08
+n 1.6
+px 1000
+py 1000
+is_specular 1
+is_transmissive 1
+
+newmtl mirror
+ke 0 0 0
+kd 0.7 0.7 0.7
+ks 0.08 0.08 0.08
+n 1.6
+px 1000
+py 1000
+is_specular 1
+is_transmissive 0
+
+newmtl glossy
+ke 0 0 0
+kd 0.1 0.1 0.1
+ks 0.767 0.767 0.767
+n 1.0
+px 1000
+py 1000
+is_specular 0
+is_transmissive 0

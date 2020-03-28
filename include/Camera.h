@@ -3,8 +3,10 @@
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
- *  researchers trying to implement Physically Based Rendering techniques.
+ *  "Yune" is a personal project and an educational raytracer/pathtracer. It's aimed at young
+ *  researchers trying to implement raytracing/pathtracing but don't want to mess with boilerplate code.
+ *  It provides all basic functionality to open a window, save images, etc. Since it's GPU based, you only need to modify
+ *  the kernel file and see your program in action. For details, check <https://github.com/gallickgunner/Yune>
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +26,10 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <CL_headers.h>
-#include <Eigen_typedefs.h>
+#include "CL_headers.h"
+#include "glm/vec4.hpp"
+#include "glm/mat4x4.hpp"
+
 #include <vector>
 namespace yune
 {
@@ -61,7 +65,7 @@ namespace yune
              * \param[in] yaw The angles in radian by which to rotate around the Y-axis.
              *
              */
-            void setOrientation(const Vec4f& dir, float pitch, float yaw);
+            void setOrientation(const glm::vec4& dir, float pitch, float yaw);
 
             /** \brief Set the View Matrix of the camera.
              *
@@ -71,7 +75,7 @@ namespace yune
              * \param[in] eye A vec4 determining the position of the Camera.
              *
              */
-            void setViewMatrix(const Vec4f& side, const Vec4f& up, const Vec4f& look_at, const Vec4f& eye);
+            void setViewMatrix(const glm::vec4& side, const glm::vec4& up, const glm::vec4& look_at, const glm::vec4& eye);
 
             /** \brief Set values to be passed on to the Camera buffer.
              *
@@ -80,32 +84,23 @@ namespace yune
              */
             void setBuffer(Cam* cam_data);
 
-            /** \brief Set Rotation Speed of the camera.
-             *
-             * \param[in] rot_speed The rotation speed of the camera. Range between 0 and 1. Values closer to 0 give a more smooth and slower rotation.
-             *
-             */
-            void setRotationSpeed(float rot_speed);
+            void resetCamera();
+            void updateViewPlaneDist();
+            void updateViewMatrix();
 
-            /** \brief Set Movement Speed of the camera.
-             *
-             * \param[in] mov_speed The movement speed of the camera. Give a value between 0 and 1. Values closer to 0 give a more smooth and slower movement.
-             *
-             */
-            void setMovementSpeed(float mov_speed);
-
-            bool is_changed;                /**< A flag determining if the Camera changed orientation, hence if the buffer needs to be updated. */
-            Vec4f side;                     /**< The Camera's Side vector. */
-            Vec4f up;                       /**< The Camera's Up vector. */
-            Vec4f look_at;                  /**< The Camera's Look At vector. */
-            Vec4f eye;                      /**< The Camera's Eye/Position vector. */
-
-        private:
-            float view_plane_dist;          /**< The distance of the View Plane from the Camera; This is determined based on the vertical field of view. */
-            float y_FOV;                    /**< The vertical Field of View in degrees. */
+            bool is_changed;        /**< A flag determining if the Camera changed orientation, hence if the buffer needs to be updated. */
+            glm::vec4 side;         /**< The Camera's Side vector. */
+            glm::vec4 up;           /**< The Camera's Up vector. */
+            glm::vec4 look_at;      /**< The Camera's Look At vector. */
+            glm::vec4 eye;          /**< The Camera's Eye/Position vector. */
+            float y_FOV;            /**< The vertical Field of View in degrees. */
             float rotation_speed;           /**< The rotation speed of the camera. Range between 0 and 1. Values closer to 0 guarantess a more smooth and slower rotation. */
             float move_speed;               /**< The movement speed of the camera. Range between 0 and 1. Values closer to 0 guarantess a more smooth and slower movement. */
-            Mat4x4f view_to_world_mat;      /**< A glm mat4x4 defining the View to World Matrix. Values in here aren't guaranteed to be normalized. */
+            glm::mat4x4 view2world_mat;      /**< A glm mat4x4 defining the View to World Matrix. Values in here aren't guaranteed to be normalized. */
+        private:
+            float view_plane_dist;          /**< The distance of the View Plane from the Camera; This is determined based on the vertical field of view. */
+
+
     };
 }
 #endif // CAMERA_H

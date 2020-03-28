@@ -13,14 +13,17 @@ typedef struct Triangle{
 //For use with Triangle geometry.
 typedef struct Material{
 
-    float4 emissive;
-    float4 diff;
-    float4 spec;
-    float ior;
+    float4 ke;
+    float4 kd;
+    float4 ks;
+    float n;
+    float k;
+    float px;
+    float py;
     float alpha_x;
     float alpha_y;
-    short is_specular;
-    short is_transmissive;    // total 64 bytes.
+    int is_specular;
+    int is_transmissive;    // total 80 bytes.
 } Material;
 
 typedef struct AABB{    
@@ -49,37 +52,18 @@ typedef struct Camera{
 // to generate uncorrelated seed values from pixel IDs. You can check the given implementation for details on how to produce random numbers.
 
 __kernel void pathtracer(__write_only image2d_t outputImage, __read_only image2d_t inputImage, __constant Camera* main_cam, 
-                         int scene_size, __global Triangle* scene_data, __global Material* mat_data, int bvh_size, __global BVHNodeGPU* bvh,
-                         int GI_CHECK, int reset, uint rand, int block)
+                         int scene_size, __global Triangle* vert_data, __global Material* mat_data, int bvh_size, __global BVHNodeGPU* bvh,
+                         int GI_CHECK, int reset, uint rand, int block, int block_x, int block_y)
 {
     int img_width = get_image_width(outputImage);
     int img_height = get_image_height(outputImage);
     int2 pixel = (int2)(get_global_id(0), get_global_id(1));
     
-    if(block == 1)
-    {            
-        if (pixel.x >= img_width/2 || pixel.y >= img_height/2)
-            return;
-    }
-    else if(block == 2)
-    {
-        pixel.x += img_width/2;
-        if (pixel.x >= img_width || pixel.y >= img_height/2)
-            return;
-    }
-    else if(block == 3)
-    {   
-        pixel.y += img_height/2;
-        if (pixel.x >= img_width/2 || pixel.y >= img_height)
-            return;
-    }
-    else if(block == 4)
-    {
-        pixel.x += img_width/2;
-        pixel.y += img_height/2;
-        if (pixel.x >= img_width || pixel.y >= img_height)
-            return;
-    }
+    pixel.x += ceil((float)img_width / block_x) * (block % block_x);
+    pixel.y += ceil((float)img_height / block_y) * (block / block_x);
+    
+    if (pixel.x >= img_width || pixel.y >= img_height)
+        return;
     
     //Start your code from here. It's not necessary to use Triangles/BVH. If you don't read any triangles, these buffers will be null
 }

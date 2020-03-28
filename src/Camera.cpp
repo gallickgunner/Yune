@@ -3,8 +3,10 @@
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
- *  researchers trying to implement Physically Based Rendering techniques.
+ *  "Yune" is a personal project and an educational raytracer/pathtracer. It's aimed at young
+ *  researchers trying to implement raytracing/pathtracing but don't want to mess with boilerplate code.
+ *  It provides all basic functionality to open a window, save images, etc. Since it's GPU based, you only need to modify
+ *  the kernel file and see your program in action. For details, check <https://github.com/gallickgunner/Yune>
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,32 +23,28 @@
  *
  ******************************************************************************/
 
-#include <Camera.h>
-#include <Eigen/Geometry>
-#include <math.h>
-#include <iostream>
+#include "Camera.h"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/matrix_access.hpp"
+#include "glm/vec3.hpp"
+
+#include <cmath>
 
 namespace yune
 {
 
-    Camera::Camera() : y_FOV(60.0f), view_to_world_mat(), rotation_speed(0.25f), move_speed(0.1f)
+    Camera::Camera() : y_FOV(60.0f), view2world_mat(), rotation_speed(0.25f), move_speed(0.1f)
     {
         //ctor
-        setViewMatrix(Vec4f(1.f, 0.f, 0.f, 0.f),  // side
-                      Vec4f(0.f, 1.f, 0.f, 0.f),  // up
-                      Vec4f(0.f, 0.f, -1.f, 0.f), // look_at
-                      Vec4f(0.f, 0.f, 0.f, 1.f)   // eye
-                      );
-        view_plane_dist =  1/tan(y_FOV*3.14/360);
-        is_changed = true;
+        resetCamera();
     }
 
-    Camera::Camera(float y_FOV, float rot_speed, float mov_speed) : y_FOV(y_FOV), view_to_world_mat(), rotation_speed(rot_speed), move_speed(mov_speed)
+    Camera::Camera(float y_FOV, float rot_speed, float mov_speed) : y_FOV(y_FOV), view2world_mat(), rotation_speed(rot_speed), move_speed(mov_speed)
    {
-        setViewMatrix(Vec4f(1.f, 0.f, 0.f, 0.f),  // side
-                      Vec4f(0.f, 1.f, 0.f, 0.f),  // up
-                      Vec4f(0.f, 0.f, -1.f, 0.f), // look_at
-                      Vec4f(0.f, 0.f, 0.f, 1.f)   // eye
+        setViewMatrix(glm::vec4(1.f, 0.f, 0.f, 0.f),  // side
+                      glm::vec4(0.f, 1.f, 0.f, 0.f),  // up
+                      glm::vec4(0.f, 0.f, -1.f, 0.f), // look_at
+                      glm::vec4(0.f, 0.f, 0.f, 1.f)   // eye
                       );
         view_plane_dist =  1/tan(y_FOV*3.14/360);
         is_changed = true;
@@ -59,71 +57,111 @@ namespace yune
         //dtor
     }
 
+    void Camera::updateViewPlaneDist()
+    {
+        view_plane_dist =  1/tan(y_FOV*3.14/360);
+        is_changed = true;
+    }
+
     void Camera::setBuffer(Cam* cam_data)
     {
-        Vec4f temp = view_to_world_mat.row(0);
-        cam_data->r1 = cl_float4{temp.x(), temp.y(), temp.z(), temp.w()};
+        glm::vec4 temp = glm::row(view2world_mat, 0);
+        cam_data->r1 = cl_float4{temp.x, temp.y, temp.z, temp.w};
 
-        temp = view_to_world_mat.row(1);
-        cam_data->r2 = cl_float4{temp.x(), temp.y(), temp.z(), temp.w()};
+        temp = glm::row(view2world_mat, 1);
+        cam_data->r2 = cl_float4{temp.x, temp.y, temp.z, temp.w};
 
-        temp = view_to_world_mat.row(2);
-        cam_data->r3 = cl_float4{temp.x(), temp.y(), temp.z(), temp.w()};
+        temp = glm::row(view2world_mat, 2);
+        cam_data->r3 = cl_float4{temp.x, temp.y, temp.z, temp.w};
 
-        temp = view_to_world_mat.row(3);
-        cam_data->r4 = cl_float4{temp.x(), temp.y(), temp.z(), temp.w()};
+        temp = glm::row(view2world_mat, 3);
+        cam_data->r4 = cl_float4{temp.x, temp.y, temp.z, temp.w};
 
         cam_data->view_plane_dist = view_plane_dist;
         is_changed = false;
     }
 
-    void Camera::setViewMatrix(const Vec4f& side, const Vec4f& up, const Vec4f& look_at, const Vec4f& eye)
+    void Camera::updateViewMatrix()
     {
-        this->side = side.normalized();
-        this->up = up.normalized();
-        this->look_at = look_at.normalized();
-        this->eye = eye;
-        view_to_world_mat << this->side, this->up, this->look_at * -1, this->eye;
-
+        side = glm::normalize(glm::column(view2world_mat, 0));
+        up = glm::normalize(glm::column(view2world_mat, 1));
+        look_at = -glm::normalize(glm::column(view2world_mat, 2));
+        eye = glm::column(view2world_mat, 3);
+        is_changed = true;
     }
 
-    void Camera::setOrientation(const Vec4f& dir, float pitch, float yaw)
+    void Camera::resetCamera()
     {
-        Mat4x4f rotx = Mat4x4f::Identity();
-        Mat4x4f roty = Mat4x4f::Identity();
+        setViewMatrix(glm::vec4(1.f, 0.f, 0.f, 0.f),  // side
+                      glm::vec4(0.f, 1.f, 0.f, 0.f),  // up
+                      glm::vec4(0.f, 0.f, -1.f, 0.f), // look_at
+                      glm::vec4(0.f, 0.f, 0.f, 1.f)   // eye
+                      );
+        y_FOV = 60;
+        view_plane_dist =  1/tan(y_FOV*3.14/360);
+        is_changed = true;
+    }
 
-        Eigen::AngleAxisf aaf_x( pitch * rotation_speed, Vec3f(this->side.x(), this->side.y(), this->side.z() ) );
-        Eigen::AngleAxisf aaf_y( yaw * rotation_speed, Vec3f::UnitY());
-        rotx.block<3,3>(0,0) = aaf_x.toRotationMatrix();
-        roty.block<3,3>(0,0) = aaf_y.toRotationMatrix();
+    void Camera::setViewMatrix(const glm::vec4& side, const glm::vec4& up, const glm::vec4& look_at, const glm::vec4& eye)
+    {
+        this->eye = eye;
+        this->side = glm::normalize(side);
+        this->up = glm::normalize(up);
+        this->look_at = glm::normalize(look_at);
 
-        Vec4f temp = rotx * this->up;
+        /* Always Remember that for Right Handed Coordinate Systems, the Camera (initially aligned with World Reference frame)
+         * has the look direction negative to that of the Z axis. Hence to get the basis vector in Z we have to invert the look vector.
+         */
+        view2world_mat = glm::mat4(side, up, -look_at, eye);
+        is_changed = true;
+    }
+
+    void Camera::setOrientation(const glm::vec4& dir, float pitch, float yaw)
+    {
+        if(dir.length() > 0)
+        {
+            if(dir.z > 0)
+                eye += look_at * move_speed;
+            else if (dir.z < 0)
+                eye -= look_at * move_speed;
+            else if (dir.x > 0)
+                eye += side * move_speed;
+            else if (dir.x < 0)
+                eye -= side * move_speed;
+            else if (dir.y > 0)
+                eye += up * move_speed;
+            else if (dir.y < 0)
+                eye -= up * move_speed;
+
+            if(pitch == 0 && yaw == 0)
+            {
+                view2world_mat = glm::column(view2world_mat, 3, eye);
+                is_changed = true;
+                return;
+            }
+        }
+
+        glm::mat4x4 rotx, roty;
+        rotx = glm::rotate(glm::mat4(1.0f), pitch * rotation_speed, glm::vec3(side.x, side.y, side.z) );
+        roty = glm::rotate(glm::mat4(1.0f), yaw * rotation_speed, glm::vec3(0, 1, 0) );
+
+        glm::vec4 temp = rotx * this->up;
+
+        //Move to origin
+        view2world_mat = glm::column(view2world_mat, 3, glm::vec4(0,0,0,1));
 
         // Rotate around local X axis in the range -90 to +90.
-        if(temp.y() >= 0)
-            view_to_world_mat = rotx * view_to_world_mat;
-        view_to_world_mat = roty * view_to_world_mat;
+        if(temp.y >= 0)
+            view2world_mat = rotx * view2world_mat;
+        view2world_mat = roty * view2world_mat;
 
-        side = view_to_world_mat.col(0).normalized();
-        up = view_to_world_mat.col(1).normalized();
-        look_at = -view_to_world_mat.col(2).normalized();
+        //Move back to eye
+        view2world_mat = glm::column(view2world_mat, 3, eye);
 
-        if(dir.norm() > 0)
-        {
-            if(dir.z() > 0)
-                eye += look_at * move_speed;
-            else if (dir.z() < 0)
-                eye -= look_at * move_speed;
-            else if (dir.x() > 0)
-                eye += side * move_speed;
-            else if (dir.x() < 0)
-                eye -= side * move_speed;
-            else if (dir.y() > 0)
-                eye += up * move_speed;
-            else if (dir.y() < 0)
-                eye -= up * move_speed;
-        }
-        view_to_world_mat.col(3) = this->eye;
+        side = glm::normalize(glm::column(view2world_mat, 0));
+        up = glm::normalize(glm::column(view2world_mat, 1));
+        look_at = -glm::normalize(glm::column(view2world_mat, 2));
+
         is_changed = true;
     }
 

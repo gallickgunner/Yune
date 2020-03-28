@@ -3,8 +3,10 @@
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
- *  researchers trying to implement Physically Based Rendering techniques.
+ *  "Yune" is a personal project and an educational raytracer/pathtracer. It's aimed at young
+ *  researchers trying to implement raytracing/pathtracing but don't want to mess with boilerplate code.
+ *  It provides all basic functionality to open a window, save images, etc. Since it's GPU based, you only need to modify
+ *  the kernel file and see your program in action. For details, check <https://github.com/gallickgunner/Yune>
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -91,15 +93,35 @@ struct BVHNodeGPU
 
 struct Material
 {
-    cl_float4 emissive;
-    cl_float4 diff;
-    cl_float4 spec;
-    cl_float ior;
+    cl_float4 ke;
+    cl_float4 kd;
+    cl_float4 ks;
+    cl_float n;
+    cl_float k;
+    cl_float px;
+    cl_float py;
     cl_float alpha_x;
     cl_float alpha_y;
-    cl_short is_specular;
-    cl_short is_transmissive;    // total 64 bytes.
+    cl_int is_specular;
+    cl_int is_transmissive;    // total 80 bytes.
 } __attribute__((aligned(16)));
+
+inline Material newMaterial()
+{
+    return {
+            {0,0,0,1},          //ke
+            {0.3,0.3,0.3,1},    //kd
+            {0,0,0,1},          //ks
+            1,                  //n
+            1,                  //k
+            1,                  //px
+            1,                  //py
+            100,                //alpha_x
+            100,                //alpha_y
+            0,                  //is_specular
+            0                   //is_transmissive
+        };
+}
 
 inline cl_float4 operator+ (cl_float4& a, cl_float4& b)
 {

@@ -1,0 +1,20 @@
+# Template for material file required by Yune. It's a very dumb down version of the original ".mtl" file.
+# "ke", "kd" and "ks" define the emissive, diffuse and specular color respectively. 
+# "n" and "k" are the real and complex Index of refraction. "k" can be considered as the extinction coefficient for metals.
+# "px" and "py" are the phong exponent for anisotropic surfaces.
+# "alpha_x" and "alpha_y" are parameters that control slope distribution of microfacets for anisotropic materials. They are equal for isotropic materials.
+# "is_specular" and "is_transmissive" determine whether the material is perfectly specular and transparent.
+# Each and every property is optional. If not provided, a default value will be loaded.
+
+newmtl mynew-mat-123
+ke 1 2 3
+kd 4 5 6
+ks 5 6 5
+n 1.5
+k 2.2
+px  100
+py  200
+alpha_x 100
+alpha_y 200
+is_specular 0
+is_transmissive 0

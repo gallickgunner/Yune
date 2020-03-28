@@ -3,8 +3,10 @@
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
- *  researchers trying to implement Physically Based Rendering techniques.
+ *  "Yune" is a personal project and an educational raytracer/pathtracer. It's aimed at young
+ *  researchers trying to implement raytracing/pathtracing but don't want to mess with boilerplate code.
+ *  It provides all basic functionality to open a window, save images, etc. Since it's GPU based, you only need to modify
+ *  the kernel file and see your program in action. For details, check <https://github.com/gallickgunner/Yune>
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,11 +26,13 @@
 #ifndef CLMANAGER_H
 #define CLMANAGER_H
 
-#include <BVH.h>
-#include <CL_headers.h>
-#include <glad/glad.h>
+#include "BVH.h"
+#include "CL_headers.h"
+#include "glad/glad.h"
+
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace yune
 {
@@ -36,35 +40,30 @@ namespace yune
     /** \brief This class manages the OpenCL context and Buffers. The class manages the releasing of memory objects, kernels etc in
      *  RAII fashion. This class is intended for 1 time use only i.e. no more than one instance.
      */
-    class CL_context
+    class CLManager
     {
         public:
-            CL_context();    /**< Default Constructor. */
-            ~CL_context();   /**< Default Destructor. */
+            CLManager();    /**< Default Constructor. */
+            ~CLManager();   /**< Default Destructor. */
 
 
             void setup();   /**<  Setup OpenCL platforms, devices and context*/
 
-            /** \brief Create OpenCL program and setup kernels.
+            /** \brief Create OpenCL Rendering program and setup kernel.
              *
-             * \param[in] opts      OpenCL compiler options. For specifying version, the format should be as follows "-cl-std=CLx.y" where x.y represent the version (1.2, 2.0 etc)
-             * \param[in] pt_fn     The file name containing the kernel for Path tracer/Ray-tracer or any similar Rendering tehcnique.
-             * \param[in] pt_kn     The kernel function name contained in file "pt_fn"
-             * \param[in] pp_fn     The file name containing the kernel for Post Processing effects like tonemapping, gamma correction etc.
-             * \param[in] pp_kn     The kernel function name contained in file "pp_fn"
-             *
+             * \param[in] fn     The file name containing the kernel for Path tracer/Ray-tracer or any similar Rendering tehcnique.
+             * \param[in] path   The full path of the file name above
+             * \return True if the function succeeds, else false. Error message will be stored in CLManager::error_msg
              */
-            void createProgram(std::string opts, std::string pt_fn, std::string pt_kn, std::string pp_fn, std::string pp_kn);
+            bool createRenderProgram(std::string fn, std::string path, bool reload);
 
-            /** \brief Setup an OpenCL context and Buffer Object.
+            /** \brief Create OpenCL Rendering program and setup kernel.
              *
-             * \param[in] rbo_IDs      The RenderBuffer Object array on top of which the Read and Write Only OpenCL Image Objects are created.
-             * \param[in] scene_data   A std::vector containing the data for the Scene to be pass on to the Buffer Object.
-             * \param[in] mat_data     A std::vector containing the data for the Material to be pass on to the Buffer Object.
-             * \param[in] bvh_data     A std::vector containing the data for the BVH.
-             * \param[in] cam_data     A pointer to Cam structure ontaining the data for the Camera to be pass on to the Buffer Object. A similar structure is present on GPU.
+             * \param[in] fn     The file name containing the kernel for Post-Processing/Tonemapping
+             * \param[in] path   The full path of the file name above
+             * \return True if the function succeeds, else false. Error message will be stored in CLManager::error_msg
              */
-            void setupBuffers(GLuint* rbo_IDs, std::vector<TriangleGPU>& vert_data, std::vector<Material>& mat_data, std::vector<BVHNodeGPU>& bvh_data, Cam* cam_data);
+            bool createPostProcProgram(std::string fn, std::string path, bool reload);
 
             /** \brief Display the Error message for the error code.
              *
@@ -73,6 +72,20 @@ namespace yune
              * \param line_number The line number at which the error occurred. Used for pin-pointing where the exception occurred.
              */
             static void checkError(cl_int err_code, std::string filename, int line_number);
+
+            /** \brief Set the callback function to set messages shown by GUI incase of any event
+             */
+            void setGuiMessageCb(std::function<void(const std::string&, const std::string&, const std::string&)>);
+
+
+            //Setup Buffer Objects
+            void setupCameraBuffer(Cam* cam_data);
+            bool setupImageBuffers(GLuint rbo_IDs[]);
+            bool setupBVHBuffer(std::vector<BVHNodeGPU>& bvh_data, float bvh_size, float scene_size);
+            bool setupVertexBuffer(std::vector<TriangleGPU>& vert_data, float scene_size);
+            bool setupMatBuffer(std::vector<Material>& mat_data);
+
+            std::string rk_file, rk_file_path, rk_name, ppk_file, ppk_file_path, ppk_name, rk_compiler_opts, ppk_compiler_opts;
 
         private:
             class Device
@@ -130,6 +143,7 @@ namespace yune
             void setupDevices(cl_context_properties* properties);   /**< Load the device currently assosciated with OpenGL. */
             void setupPlatforms();                                  /**< Display a list of OpenCL platforms and devices and select a platform. */
 
+            static std::function<void(const std::string&, const std::string&, const std::string&)> setMessageCb;   /**< The function pointer to the RendererGUI message callback function. */
 
             Platform target_platform;               /**< The OpenCL platform ID fo the selected platform. */
             Device target_device;                   /**< The OpenCL device ID of the selected device. */
@@ -139,8 +153,8 @@ namespace yune
             cl_command_queue comm_queue;            /**< The OpenCL command queue.*/
             cl_kernel rend_kernel;                  /**< The main path-tracer kernel.*/
             cl_kernel pp_kernel;                    /**< The kernel for post processing effects like Tone mapping and Gamma Correction.*/
-            cl_mem image_buffers[3];                /**< Image Buffer Objects. There are 2 for swapping role between read and write-only images. Third is for postprocessing */
-            cl_mem vert_buffer;                    /**< The Buffer Object used to hold Scene model data. */
+            cl_mem image_buffers[4];                /**< Image Buffer Objects. There are 2 for swapping role between read and write-only images. Third is for postprocessing*/
+            cl_mem vert_buffer;                     /**< The Buffer Object used to hold Scene model data. */
             cl_mem mat_buffer;                      /**< The Buffer Object used to hold material data. */
             cl_mem bvh_buffer;                      /**< The Buffer Object used to hold bvh data. */
             cl_mem binary_heap_buffer;              /**< The Buffer Object used to hold binary heap which is used to traverse bvh. */
@@ -150,7 +164,8 @@ namespace yune
             size_t ppk_wgs;                         /**< The maximum nubmer of Work Items in a Workgroup the post processing kernel can afford due to memory limitations. */
             size_t preferred_workgroup_multiple;    /**< The preferred multiple the of the local workgroup size (depends on the device). */
 
-            friend class Renderer;
+
+            friend class RendererCore;
     };
 }
 #endif // CLMANAGER_H

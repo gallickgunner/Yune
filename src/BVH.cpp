@@ -3,8 +3,10 @@
  *
  *  Copyright (C) 2018 by Umair Ahmed and Syed Moiz Hussain.
  *
- *  "Yune" is a framework for a Physically Based Renderer. It's aimed at young
- *  researchers trying to implement Physically Based Rendering techniques.
+ *  "Yune" is a personal project and an educational raytracer/pathtracer. It's aimed at young
+ *  researchers trying to implement raytracing/pathtracing but don't want to mess with boilerplate code.
+ *  It provides all basic functionality to open a window, save images, etc. Since it's GPU based, you only need to modify
+ *  the kernel file and see your program in action. For details, check <https://github.com/gallickgunner/Yune>
  *
  *  "Yune" is a free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,24 +25,19 @@
 
 #include "BVH.h"
 #include <limits>
+
 #include <cmath>
-#include <iostream>
+
 namespace yune
 {
     BVH::BVH()
     {
-        bins = 25;
+        bins = 20;
         leaf_primitives = 10;
         cost_isect = 1;
         cost_trav = 1/8.0f;
+        clearValues();
         //ctor
-    }
-
-    BVH::BVH(int bins) : bins(std::min(bins, 256))
-    {
-        leaf_primitives = 10;
-        cost_isect = 1;
-        cost_trav = 1/8.0f;
     }
 
     BVH::~BVH()
@@ -48,8 +45,21 @@ namespace yune
         //dtor
     }
 
-    void BVH::createBVH(AABB root, std::vector<TriangleCPU*>& cpu_tri_list)
+    void BVH::clearValues()
     {
+        bvh_size_kb = 0, bvh_size_mb = 0;
+        cpu_node_list.clear();
+        gpu_node_list.clear();
+    }
+
+    void BVH::createBVH(AABB root, const std::vector<TriangleCPU>& cpu_tri_list, int bvh_bins)
+    {
+        if(bvh_bins == bins && !gpu_node_list.empty())
+            return;
+
+        clearValues();
+        bins = bvh_bins;
+
         cpu_node_list.push_back(BVHNodeCPU(root));
         for(int i = 0; i < cpu_tri_list.size(); i++)
             cpu_node_list[0].primitives.push_back(i);
@@ -159,9 +169,12 @@ namespace yune
         resizeBvh(cpu_tri_list);
         for(int i = 0; i < cpu_node_list.size(); i++)
             gpu_node_list.push_back(cpu_node_list[i].gpu_node);
+
+        bvh_size_kb = (float)gpu_node_list.size() * sizeof(BVHNodeGPU) / 1024;
+        bvh_size_mb = bvh_size_kb / 1024;
     }
 
-    void BVH::populateChildNodes(const BVHNodeCPU& parent, BVHNodeCPU& c1, BVHNodeCPU& c2, std::vector<TriangleCPU*>& cpu_tri_list)
+    void BVH::populateChildNodes(const BVHNodeCPU& parent, BVHNodeCPU& c1, BVHNodeCPU& c2, const std::vector<TriangleCPU>& cpu_tri_list)
     {
         int child_empty = -1; // 0 == c1 empty, 1 == c2 empty
 
@@ -185,7 +198,7 @@ namespace yune
             for(int i = 0; i < parent.primitives.size(); i++)
             {
                 cl_float4 center;
-                center = cpu_tri_list[parent.primitives[i]]->centroid;
+                center = cpu_tri_list[parent.primitives[i]].centroid;
                 bool in_c1 = true;
                 for(int i = 0; i < 3; i++)
                 {
@@ -204,7 +217,7 @@ namespace yune
 
     }
 
-    void BVH::resizeBvh(std::vector<TriangleCPU*>& cpu_tri_list)
+    void BVH::resizeBvh(const std::vector<TriangleCPU>& cpu_tri_list)
     {
         float fmax = std::numeric_limits<float>::max();
         float fmin = -std::numeric_limits<float>::max();
@@ -219,7 +232,7 @@ namespace yune
             if(node.gpu_node.vert_len > 0)
             {
                 for(int i = 0; i < node.primitives.size(); i++)
-                    parent = getExtent(parent, cpu_tri_list[node.primitives[i]]->aabb);
+                    parent = getExtent(parent, cpu_tri_list[node.primitives[i]].aabb);
 
                 cpu_node_list[j].gpu_node.aabb.p_min = parent.p_min;
                 cpu_node_list[j].gpu_node.aabb.p_max = parent.p_max;
@@ -235,7 +248,7 @@ namespace yune
         }
     }
 
-    void BVH::resizeBvhNode(BVHNodeCPU& node, std::vector<TriangleCPU*>& cpu_tri_list)
+    void BVH::resizeBvhNode(BVHNodeCPU& node, const std::vector<TriangleCPU>& cpu_tri_list)
     {
         float fmax = std::numeric_limits<float>::max();
         float fmin = -std::numeric_limits<float>::max();
@@ -247,7 +260,7 @@ namespace yune
         for(int j = 0; j < node.primitives.size(); j--)
         {
             int idx = node.primitives[j];
-            parent = getExtent(parent, cpu_tri_list[idx]->aabb);
+            parent = getExtent(parent, cpu_tri_list[idx].aabb);
         }
 
         node.gpu_node.aabb.p_min = parent.p_min;
@@ -266,7 +279,7 @@ namespace yune
         return parent;
     }
 
-    BVH::SplitAxis BVH::findSplitAxis(std::vector<TriangleCPU*>& cpu_tri_list, std::vector<int>& child_list)
+    BVH::SplitAxis BVH::findSplitAxis(const std::vector<TriangleCPU>& cpu_tri_list, std::vector<int>& child_list)
     {
         AABB parent;
         float fmax = std::numeric_limits<float>::max();
@@ -281,7 +294,7 @@ namespace yune
         {
             int k = child_list[j];
             //Find min/max X
-            parent = getExtent(parent, cpu_tri_list[k]->aabb);
+            parent = getExtent(parent, cpu_tri_list[k].aabb);
         }
 
         cl_float4 diag = parent.p_max - parent.p_min;
