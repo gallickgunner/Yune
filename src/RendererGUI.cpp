@@ -107,7 +107,7 @@ namespace yune {
                                          );
         cl_manager.setup();
         bool kernel_loaded = false;
-        kernel_loaded = cl_manager.createRenderProgram("udpt.cl", "./kernels/legacy/udpt-primitives.cl", false);
+        kernel_loaded = cl_manager.createRenderProgram("udpt-primitives.cl", "./kernels/legacy/udpt-primitives.cl", false);
         kernel_loaded &= cl_manager.createPostProcProgram("tonemap.cl", "./kernels/post-proc/tonemap.cl", false);
         if(kernel_loaded)
         {

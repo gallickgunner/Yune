@@ -54,9 +54,6 @@ namespace yune
 
     void BVH::createBVH(AABB root, const std::vector<TriangleCPU>& cpu_tri_list, int bvh_bins)
     {
-        if(bvh_bins == bins && !gpu_node_list.empty())
-            return;
-
         clearValues();
         bins = bvh_bins;
 
