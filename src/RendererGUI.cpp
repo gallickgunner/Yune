@@ -481,12 +481,11 @@ namespace yune {
         ImVec2 window_pos(10, 35);
 
         ImGui::SetNextWindowSize(ImVec2(330,500), ImGuiCond_Appearing);
-        ImGui::SetNextWindowSizeConstraints(ImVec2(330, 0), ImVec2(330, glfw_manager.framebuffer_height/1.5f));
+        ImGui::SetNextWindowSizeConstraints(ImVec2(330, 0), ImVec2(330, glfw_manager.framebuffer_height/1.3f));
         ImGui::SetNextWindowPos(window_pos, ImGuiCond_Once, ImVec2(0,0));
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15,0.15,0.15,0.85));
-
-        if (ImGui::Begin("Misc Settings##window", &misc_settings_shown, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::Begin("Misc Settings##window", &misc_settings_shown, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoFocusOnAppearing))
         {
             Camera& cam = renderer.render_scene.main_camera;
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(style.ItemSpacing.x, style.ItemSpacing.y * 2.0));
