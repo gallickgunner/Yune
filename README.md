@@ -51,7 +51,7 @@ Currently Implemented features,
 
 Watch it in action below, (click for full video)
 
-[![Demo](https://i.imgur.com/jKqjYut.gif)](https://www.youtube.com/watch?v=PrbROGU0ztE)
+[![Demo](https://i.imgur.com/LLpWtrc.gif)](https://www.youtube.com/watch?v=VdJDk3MgG9A)
 
 ## TODO
 
