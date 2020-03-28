@@ -1,7 +1,9 @@
 *Editor-Screen. Simple Primitives using Oren-Nayar for diffuse and Phong for glossy materials.*
 ![Yune Results2](https://github.com/gallickgunner/Yune/blob/Pictures/Images/editor.jpg?raw=true)
+
 *Utah teapot rendered using transmissive material.*
 ![teapot](https://github.com/gallickgunner/Yune/blob/Pictures/Images/teapot-2kspp-refr.jpg?raw=true)
+
 *Ico Sphere rendered using transmissive material.*
 ![cbwith-refractive-sphere](https://github.com/gallickgunner/Yune/blob/Pictures/Images/5kspp-CB-Sphere.jpg?raw=true)
 
