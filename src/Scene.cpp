@@ -158,13 +158,12 @@ namespace yune
                 std::cout << "\nMaterial File Not Found. Creating Default File..." << std::endl;
                 mat_index["default"] = 0;
                 mat_data.push_back(newMaterial());
-                file << "ke " << "0 0 0 1"
-                    << "kd " << "0.3 0.3 0.3 1"
-                    << "ks " << "0 0 0 1"
-                    << "n 1" << "k 1" << "px 0" << "px 0"
-                    << "alpha_x 100" << "alpha_y 100" << "is_specular 0" << "is_transmissive 0";
+                file << "ke " << "0 0 0" << "\n"
+                    << "kd " << "0.3 0.3 0.3" << "\n"
+                    << "ks " << "0 0 0" << "\n"
+                    << "n 1" << "\n" << "k 1" << "\n" << "px 0" << "\n" << "py 0" << "\n"
+                    << "alpha_x 100" << "\n" << "alpha_y 100" << "\n" << "is_specular 0" << "\n" << "is_transmissive 0";
                 std::cout << "File created successfully!" << std::endl;
-
             }
             else
             {
