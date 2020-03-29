@@ -1,3 +1,5 @@
+#yune-preproc kernel-name pathtracer
+
 typedef struct Triangle{
 
     float4 v1;
@@ -29,7 +31,7 @@ typedef struct Material{
 typedef struct AABB{    
     float4 p_min;
     float4 p_max;
-}AABB;
+} AABB;
 
 typedef struct BVHNodeGPU{
     AABB aabb;          //32 
@@ -38,12 +40,22 @@ typedef struct BVHNodeGPU{
     int vert_len;       //4 - total 80
 } BVHNodeGPU;
 
+typedef struct Mat4x4{
+    float4 r1;
+    float4 r2;
+    float4 r3;
+    float4 r4;
+} Mat4x4;
+
 typedef struct Camera{
     Mat4x4 view_mat;
     float view_plane_dist;  // total 68 bytes
     float pad[3];           // 12 bytes padding to reach 80 (next multiple of 16)
 } Camera;
 
+__constant sampler_t sampler = CLK_NORMALIZED_COORDS_FALSE |
+                               CLK_ADDRESS_CLAMP_TO_EDGE   |
+                               CLK_FILTER_NEAREST;
 
 //The Camera parameter provided to the kernel follows the struct definition defined above. It contains a view to world matrix. And a view plane distance
 //parameter which is the length of the view plane from the camera. The camera is initially looking in the -Z direction and origin at (0,0,0)
