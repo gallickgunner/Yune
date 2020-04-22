@@ -27,6 +27,7 @@
 #include <limits>
 
 #include <cmath>
+#include <algorithm> // min(); max();
 
 namespace yune
 {

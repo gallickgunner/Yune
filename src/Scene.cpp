@@ -34,6 +34,7 @@
 #include <vector>
 #include <map>
 #include <limits>
+#include <algorithm>
 
 namespace yune
 {

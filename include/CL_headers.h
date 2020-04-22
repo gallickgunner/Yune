@@ -54,7 +54,7 @@
 /* When using CL_MEM_ALLOC_HOST_PTR we don't need to worry about alignment. However when using the "USE_HOST_PTR" flag we have
  * to provide aligned data. We try to ensure aligned memory anyways in-case we want to measure performance difference between the two flags.
  */
-struct Cam
+struct alignas(16) Cam
 {
     cl_float4 r1;
     cl_float4 r2;
@@ -62,9 +62,9 @@ struct Cam
     cl_float4 r4;
     cl_float view_plane_dist;   // total 68 bytes
     cl_float pad[3];            // padding 12 bytes to reach 80 (next multiple of 16)
-} __attribute__((aligned(16)));
+};
 
-struct TriangleGPU
+struct alignas(16) TriangleGPU
 {
     cl_float4 v1;
     cl_float4 v2;
@@ -74,24 +74,24 @@ struct TriangleGPU
     cl_float4 vn3;
     cl_int matID;       // total size till here = 100 bytes
     cl_float pad[3];    // padding 12 bytes - to make it 112 (next multiple of 16)
-} __attribute__((aligned(16)));
+};
 
-struct AABB
+struct alignas(16) AABB
 {
     cl_float4 p_min;
     cl_float4 p_max;
 
-}__attribute__((aligned(16)));
+};
 
-struct BVHNodeGPU
+struct alignas(16) BVHNodeGPU
 {
     AABB aabb;          //32
     cl_int vert_list[10];//40
     cl_int child_idx;   //4
     cl_int vert_len;    //4 - total 80
-} __attribute__((aligned(16)));
+};
 
-struct Material
+struct alignas(16) Material
 {
     cl_float4 ke;
     cl_float4 kd;
@@ -104,7 +104,7 @@ struct Material
     cl_float alpha_y;
     cl_int is_specular;
     cl_int is_transmissive;    // total 80 bytes.
-} __attribute__((aligned(16)));
+};
 
 inline Material newMaterial()
 {

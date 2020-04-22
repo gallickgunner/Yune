@@ -35,6 +35,13 @@
 #include <limits>
 #include <cctype>
 #include <algorithm>
+
+#ifdef _MSC_VER // Windows + VisualStudio
+    #define NOMINMAX // Prevent <windows.h> from defining min/max macros.
+    #include <Windows.h>
+    #include <wingdi.h> // wglGetCurrentContext()
+#endif
+
 namespace yune
 {
     std::function<void(const std::string&, const std::string&, const std::string&)> CLManager::setMessageCb;
@@ -215,8 +222,9 @@ namespace yune
                 err = clGetProgramBuildInfo(rk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
                 checkError(err, __FILE__, __LINE__ - 1);
 
-                char log[log_size];
-                err = clGetProgramBuildInfo(rk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+                std::string log;
+                log.resize(log_size);
+                err = clGetProgramBuildInfo(rk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, log_size, &log[0], NULL);
                 checkError(err, __FILE__, __LINE__ - 1);
 
                 std::cout << "\n" + std::string(log) << std::endl;
@@ -325,8 +333,9 @@ namespace yune
                 err = clGetProgramBuildInfo(ppk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
                 checkError(err, __FILE__, __LINE__ - 1);
 
-                char log[log_size];
-                err = clGetProgramBuildInfo(ppk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+                std::string log;
+                log.resize(log_size);
+                err = clGetProgramBuildInfo(ppk_program, target_device.device_id, CL_PROGRAM_BUILD_LOG, log_size, &log[0], NULL);
                 checkError(err, __FILE__, __LINE__ - 1);
                 std::cout << "\n" + std::string(log) << std::endl;
 
@@ -590,7 +599,7 @@ namespace yune
 
     CLManager::Vendor CLManager::mapPlatformToVendor(std::string str)
     {
-        CLManager::Vendor vd;
+        CLManager::Vendor vd = Vendor::UNKNOWN;
         std::transform(str.begin(), str.end(), str.begin(), ( int(&)(int) )std::tolower);
 
         if(str.find("ati") != std::string::npos )
@@ -612,33 +621,29 @@ namespace yune
         {
             size_t len = 0;
             clGetPlatformInfo(platform_id, CL_PLATFORM_NAME, 0, NULL, &len);
-            char arr[len];
-            clGetPlatformInfo(platform_id, CL_PLATFORM_NAME, len, arr, NULL);
-            name = std::string(arr);
+            name.resize(len);
+            clGetPlatformInfo(platform_id, CL_PLATFORM_NAME, len, &name[0], NULL);
         }
 
         {
             size_t len = 0;
             clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR, 0, NULL, &len);
-            char arr[len];
-            clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR, len, arr, NULL);
-            vendor = std::string(arr);
+            vendor.resize(len);
+            clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR, len, &vendor[0], NULL);
         }
 
         {
             size_t len = 0;
             clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, 0, NULL, &len);
-            char arr[len];
-            clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, len, arr, NULL);
-            version = std::string(arr);
+            version.resize(len);
+            clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, len, &version[0], NULL);
         }
 
         {
             size_t len = 0;
             clGetPlatformInfo(platform_id, CL_PLATFORM_PROFILE, 0 , NULL, &len);
-            char arr[len];
-            clGetPlatformInfo(platform_id, CL_PLATFORM_PROFILE, len, arr, NULL);
-            profile = std::string(arr);
+            profile.resize(len);
+            clGetPlatformInfo(platform_id, CL_PLATFORM_PROFILE, len, &profile[0], NULL);
         }
     }
 
@@ -660,37 +665,35 @@ namespace yune
         size_t len;
         {
             clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, NULL, &len);
-            char arr[len];
-            clGetDeviceInfo(device_id, CL_DEVICE_NAME, len, arr, NULL);
-            name = std::string(arr);
+            name.resize(len);
+            clGetDeviceInfo(device_id, CL_DEVICE_NAME, len, &name[0], NULL);
         }
 
         {
             clGetDeviceInfo(device_id, CL_DEVICE_VERSION, 0, NULL, &len);
-            char arr[len];
-            clGetDeviceInfo(device_id, CL_DEVICE_VERSION, len, arr, NULL);
-            device_ver = std::string(arr);
+            device_ver.resize(len);
+            clGetDeviceInfo(device_id, CL_DEVICE_VERSION, len, &device_ver[0], NULL);
+            
         }
 
         {
             clGetDeviceInfo(device_id, CL_DRIVER_VERSION, 0, NULL, &len);
-            char arr[len];
-            clGetDeviceInfo(device_id, CL_DRIVER_VERSION, len, arr, NULL);
-            driver_ver = std::string(arr);
+            driver_ver.resize(len);
+            clGetDeviceInfo(device_id, CL_DRIVER_VERSION, len, &driver_ver[0], NULL);
+            
         }
 
         {
             clGetDeviceInfo(device_id, CL_DEVICE_OPENCL_C_VERSION, 0, NULL, &len);
-            char arr[len];
-            clGetDeviceInfo(device_id, CL_DEVICE_OPENCL_C_VERSION, len, arr, NULL);
-            device_openclC_ver = std::string(arr);
+            device_openclC_ver.resize(len);
+            clGetDeviceInfo(device_id, CL_DEVICE_OPENCL_C_VERSION, len, &device_openclC_ver[0], NULL);
+            
         }
 
         {
             clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, 0 , NULL, &len);
-            char arr[len];
-            clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, len, arr, NULL);
-            ext = std::string(arr);
+            ext.resize(len);
+            clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, len, &ext[0], NULL);
         }
 
         cl_uint dims;
