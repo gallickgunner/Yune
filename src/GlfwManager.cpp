@@ -33,6 +33,7 @@
 #include <functional>
 #include <limits>
 #include <vector>
+#include <string>
 
 namespace yune
 {

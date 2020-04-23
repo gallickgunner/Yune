@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="DearIMGUI">
+      <UniqueIdentifier>{32f570ba-c899-4537-a9a3-225eb3fbc400}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DearIMGUI\FileBrowser">
+      <UniqueIdentifier>{ad1f2ab0-4203-430f-91d7-e8c3bbc31daf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\..\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Dear-IMGUI\imgui.cpp">
+      <Filter>DearIMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Dear-IMGUI\imgui_demo.cpp">
+      <Filter>DearIMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Dear-IMGUI\imgui_draw.cpp">
+      <Filter>DearIMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Dear-IMGUI\imgui_impl_glfw.cpp">
+      <Filter>DearIMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Dear-IMGUI\imgui_impl_opengl3.cpp">
+      <Filter>DearIMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Dear-IMGUI\imgui_widgets.cpp">
+      <Filter>DearIMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\FileBrowser\ImGuiFileBrowser.cpp">
+      <Filter>DearIMGUI\FileBrowser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\BVH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\BVHNodeCPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\CLManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\GlfwManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\RendererCore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\RendererGUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\Scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\TriangleCPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\include\BVH.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\BVHNodeCPU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\CL_headers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\CLManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\GlfwManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\RendererCore.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\RendererGUI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\Scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\stb_image_write.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\include\TriangleCPU.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Dear-IMGUI\imconfig.h">
+      <Filter>DearIMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Dear-IMGUI\imgui.h">
+      <Filter>DearIMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Dear-IMGUI\imgui_impl_glfw.h">
+      <Filter>DearIMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Dear-IMGUI\imgui_impl_opengl3.h">
+      <Filter>DearIMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Dear-IMGUI\imgui_internal.h">
+      <Filter>DearIMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Dear-IMGUI\imstb_rectpack.h">
+      <Filter>DearIMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Dear-IMGUI\imstb_textedit.h">
+      <Filter>DearIMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Dear-IMGUI\imstb_truetype.h">
+      <Filter>DearIMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\FileBrowser\ImGuiFileBrowser.h">
+      <Filter>DearIMGUI\FileBrowser</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

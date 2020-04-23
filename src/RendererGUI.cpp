@@ -99,7 +99,7 @@ namespace yune {
         /* Since GLFW manager don't have access to camera variable, pass Camera's function as callback.
          *  This function is called when Camera is updated through mouse/keyboard.
          */
-        glfw_manager.setCameraUpdateCallback(std::bind( &(renderer.render_scene.main_camera.setOrientation),
+        glfw_manager.setCameraUpdateCallback(std::bind( &(Camera::setOrientation),
                                                     &(renderer.render_scene.main_camera),
                                                     std::placeholders::_1,
                                                     std::placeholders::_2,

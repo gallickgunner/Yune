@@ -134,6 +134,7 @@ namespace yune
 
             enum class Vendor
             {
+                UNKNOWN,
                 AMD,
                 NVIDIA,
                 INTEL
