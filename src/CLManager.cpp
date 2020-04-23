@@ -184,7 +184,7 @@ namespace yune
             {
                 const std::string::iterator last = std::find(rk.begin()+ first_char, rk.end(), '\n');
                 std::string header(rk.begin() + first_char, last);
-                if(header.back() == '\r')
+                if(header != "" && header.back() == '\r')
                     header.pop_back();
                 std::stringstream ss(header);
                 std::string word;
@@ -296,7 +296,7 @@ namespace yune
             {
                 const std::string::iterator last = std::find(pk.begin()+ first_char, pk.end(), '\n');
                 std::string header(pk.begin() + first_char, last);
-                if(header.back() == '\r')
+                if(header != "" && header.back() == '\r')
                     header.pop_back();
                 std::stringstream ss(header);
                 std::string word;
