@@ -640,6 +640,9 @@ namespace imgui_addons
 
     void ImGuiFileBrowser::renderExtBox()
     {
+        if(valid_exts.size() == 0)
+            return;
+
         ImGui::PushItemWidth(ext_box_width);
         if(ImGui::BeginCombo("##FileTypes", valid_exts[selected_ext_idx].c_str()))
         {
